@@ -1,0 +1,55 @@
+# ==========================================
+# 🔐 CRITICAL SECURITY (NEVER COMMIT)
+# ==========================================
+*.env
+*.env.local
+*.env.production
+*.env.development
+*.env.*.local
+application.properties
+application.yml 
+
+# ==========================================
+# ☕ SPRING BOOT BACKEND
+# ==========================================
+# Build outputs
+**/target/
+**/build/
+**/.gradle/
+**/out/
+
+# IDE files
+**/.idea/
+**/*.iml
+**/.classpath
+**/.project
+**/.settings/
+**/.vscode/
+**/.factorypath
+**/*.ipr
+**/*.iws
+
+# Logs and OS files
+**/logs/
+**/*.log
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# 🌐 NEXT.JS FRONTEND
+# ==========================================
+# Dependencies
+**/node_modules/
+
+# Next.js build output
+**/.next/
+**/out/
+
+# Testing & coverage
+**/coverage/
+**/.nyc_output
+
+# Lerna/Yarn cache
+**/.pnpm-debug.log*
+**/.yarn/
+**/.turbo/
