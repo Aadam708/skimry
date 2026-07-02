@@ -16,7 +16,7 @@ const NavbarComponent = () => {
             alt="Skimry Logo"
             width={120} // Smaller size for the navbar
             height={40}  // Approximate height to avoid layout shift (adjust as needed)
-            className="object-contain"
+            className="object-contain w-auto h-auto"
             priority
           />
         </Link>
@@ -24,14 +24,14 @@ const NavbarComponent = () => {
 
       {/* Top Right: Nav Items with 5px gap */}
       <nav className="flex gap-1.25 text-sm md:text-base font-medium">
-        <Link href="/pricing" className="px-3 py-2 text-white hover:text-gray-300 transition-colors">
+        <Link href="/pricing" className="px-3 py-2 text-white hover:text-pink-500 transition-colors duration-500">
           Pricing
         </Link>
-        <Link href="/login" className="px-3 py-2 text-white hover:text-gray-300 transition-colors">
+        <Link href="/login" className="px-3 py-2 text-white hover:text-pink-500 transition-colors duration-500">
           Login
         </Link>
-        <Link href="/signup" className="px-3 py-2 text-white hover:text-gray-300 transition-colors">
-          Sign up
+        <Link href="register" className="px-3 py-2 text-white hover:text-pink-500 transition-colors duration-500">
+          Register
         </Link>
       </nav>
     </header>
