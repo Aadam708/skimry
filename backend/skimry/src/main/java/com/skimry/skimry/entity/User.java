@@ -1,8 +1,7 @@
 package com.skimry.skimry.entity;
 
 import java.time.LocalDateTime;
-
-import org.hibernate.validator.constraints.UUID;
+import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,7 +16,7 @@ public class User {
     @Id
     @GeneratedValue
     @Column(name = "user_id", nullable = false, updatable = false)
-    UUID userId;
+    private UUID userId;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -36,6 +35,9 @@ public class User {
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "password", nullable = false)
+    private String password;
 
 
 }
