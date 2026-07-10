@@ -1,4 +1,8 @@
+"use client";
+
+import React, { ChangeEvent, useState, SubmitEvent } from "react";
 import NavbarComponent from "../components/NavbarComponent";
+import { useRouter } from "next/navigation";
 
 type AuthInputProps = {
 	id: string;
@@ -8,6 +12,7 @@ type AuthInputProps = {
 	placeholder: string;
 	autoComplete?: string;
 	required?: boolean;
+	onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 };
 
 function AuthInput({
@@ -18,6 +23,7 @@ function AuthInput({
 	placeholder,
 	autoComplete,
 	required = true,
+	onChange,
 }: AuthInputProps) {
 	return (
 		<div className="flex flex-col gap-2">
@@ -31,13 +37,54 @@ function AuthInput({
 				placeholder={placeholder}
 				autoComplete={autoComplete}
 				required={required}
-				className="w-full rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-3 text-zinc-100 placeholder:text-zinc-500 outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-500/30"
+				className="w-full rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-3 text-zinc-100 placeholder:text-zinc-500 outline-none
+				 transition focus:border-pink-500 focus:ring-2 focus:ring-pink-500/30"
+				onChange={onChange}
 			/>
 		</div>
 	);
 }
 
 export default function RegisterPage() {
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
+	const [error, setError] = useState("");
+	const router = useRouter();
+
+	const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		setError("");
+
+		if (password !== confirmPassword) {
+			setError("Passwords do not match.");
+			return;
+		}
+
+		try {
+			const res = await fetch("http://localhost:8080/api/auth/register", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					email,
+					password,
+				}),
+			});
+
+			if (!res.ok) {
+				const message = await res.text();
+				setError(message || "Registration failed.");
+				return;
+			}
+
+			router.push("login")
+		} catch (err) {
+			setError("Could not reach server. Please try again.");
+			console.error(err);
+		}
+	};
 	return (
 		<div className="relative flex min-h-screen flex-col overflow-hidden bg-black font-sans">
 			<NavbarComponent />
@@ -49,7 +96,7 @@ export default function RegisterPage() {
 						<p className="mt-2 text-sm text-zinc-400">Start Saving Hours Today.</p>
 					</div>
 
-					<form className="flex flex-col gap-5">
+					<form className="flex flex-col gap-5" onSubmit={handleSubmit}>
 						<AuthInput
 							id="email"
 							name="email"
@@ -57,6 +104,7 @@ export default function RegisterPage() {
 							label="Email"
 							placeholder="you@example.com"
 							autoComplete="email"
+							onChange={(e => setEmail(e.target.value))}
 						/>
 
 						<AuthInput
@@ -66,6 +114,7 @@ export default function RegisterPage() {
 							label="Password"
 							placeholder="Create a strong password"
 							autoComplete="new-password"
+							onChange={e => setPassword(e.target.value)}
 						/>
 
 						<AuthInput
@@ -75,6 +124,7 @@ export default function RegisterPage() {
 							label="Confirm password"
 							placeholder="Re-enter your password"
 							autoComplete="new-password"
+							onChange={e=>setConfirmPassword(e.target.value)}
 						/>
 
 						<button
@@ -85,6 +135,8 @@ export default function RegisterPage() {
 						>
 							Create account
 						</button>
+
+						{error && <p className="text-sm text-red-400">{error}</p>}
 					</form>
 				</section>
 			</main>

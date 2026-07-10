@@ -1,5 +1,8 @@
 
 
+"use client";
+
+import { useState, type ChangeEvent, type SubmitEvent } from "react";
 import NavbarComponent from "../components/NavbarComponent";
 
 type AuthInputProps = {
@@ -10,6 +13,7 @@ type AuthInputProps = {
 	placeholder: string;
 	autoComplete?: string;
 	required?: boolean;
+	onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 };
 
 function AuthInput({
@@ -20,6 +24,7 @@ function AuthInput({
 	placeholder,
 	autoComplete,
 	required = true,
+	onChange,
 }: AuthInputProps) {
 	return (
 		<div className="flex flex-col gap-2">
@@ -34,12 +39,41 @@ function AuthInput({
 				autoComplete={autoComplete}
 				required={required}
 				className="w-full rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-3 text-zinc-100 placeholder:text-zinc-500 outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-500/30"
+				onChange={onChange}
 			/>
 		</div>
 	);
 }
 
 export default function LoginPage() {
+
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
+
+	const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
+		const res = await fetch("http://localhost:8080/api/auth/login", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			credentials: "include",
+			body: JSON.stringify({
+				email,
+				password,
+			}),
+		});
+
+		if (!res.ok) {
+			console.error("Login failed", await res.text());
+			return;
+		}
+
+		alert("login success!")
+
+	};
+
 	return (
 		<div className="relative flex min-h-screen flex-col overflow-hidden bg-black font-sans">
 			<NavbarComponent />
@@ -51,7 +85,7 @@ export default function LoginPage() {
 						<p className="max-w-sm text-sm text-zinc-400 text-balance">Ready to skim? Your saved summaries are waiting.</p>
 					</div>
 
-					<form className="flex flex-col gap-5">
+					<form className="flex flex-col gap-5" onSubmit={handleSubmit}>
 						<AuthInput
 							id="email"
 							name="email"
@@ -59,6 +93,7 @@ export default function LoginPage() {
 							label="Email"
 							placeholder="you@example.com"
 							autoComplete="email"
+							onChange={(e) => setEmail(e.target.value)}
 						/>
 
 						<AuthInput
@@ -66,8 +101,9 @@ export default function LoginPage() {
 							name="password"
 							type="password"
 							label="Password"
-							placeholder="Create a strong password"
-							autoComplete="new-password"
+							placeholder="Enter your password"
+							autoComplete="current-password"
+							onChange={(e) => setPassword(e.target.value)}
 						/>
 
 						<button
