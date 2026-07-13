@@ -4,6 +4,7 @@
 
 import { useState, type ChangeEvent, type SubmitEvent } from "react";
 import NavbarComponent from "../components/NavbarComponent";
+import { useRouter } from "next/navigation";
 
 type AuthInputProps = {
 	id: string;
@@ -49,6 +50,7 @@ export default function LoginPage() {
 
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const router = useRouter();
 
 	const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -70,7 +72,7 @@ export default function LoginPage() {
 			return;
 		}
 
-		alert("login success!")
+		router.push("dashboard");
 
 	};
 
