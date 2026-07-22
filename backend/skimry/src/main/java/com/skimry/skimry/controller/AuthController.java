@@ -2,6 +2,8 @@ package com.skimry.skimry.controller;
 
 import java.util.Map;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,8 +18,6 @@ import com.skimry.skimry.dto.UserDto;
 import com.skimry.skimry.security.JwtUtil;
 import com.skimry.skimry.service.UserService;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 
 @RequestMapping("/api/auth")
 @RestController
@@ -39,8 +39,8 @@ public class AuthController {
         return ResponseEntity.ok(savedUser);
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest req, HttpServletResponse response) {
+   @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody AuthRequest req) {
         try {
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
@@ -51,14 +51,33 @@ public class AuthController {
 
         String token = jwtUtil.generateToken(req.getEmail());
 
-        Cookie cookie = new Cookie("token", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false);
-        cookie.setPath("/");
-        cookie.setMaxAge(3600);
+        ResponseCookie cookie = ResponseCookie.from("token", token)
+                .httpOnly(true)
+                .secure(false) // HTTP for local dev
+                .path("/")
+                .maxAge(3600)
+                .sameSite("Lax") // Lax works with secure(false) over HTTP
+                .build();
 
-        response.addCookie(cookie);
-
-        return ResponseEntity.ok(Map.of("message", "Login successful"));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of("message", "Login successful"));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        ResponseCookie cookie = ResponseCookie.from("token", "")
+                .httpOnly(true)
+                .secure(false) // Must match login
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax") // Must match login
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of("message", "logged out successfully"));
+    }
+
+
 }
