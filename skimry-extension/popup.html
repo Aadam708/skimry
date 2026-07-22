@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 280px;
+      padding: 16px;
+      background-color: #09090b;
+      color: #f4f4f5;
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+    }
+    h3 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ec4899;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #ec4899;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 12px;
+      font-size: 11px;
+      padding: 8px;
+      border-radius: 4px;
+      display: none;
+    }
+    #status.success {
+      background-color: #10b981;
+      color: white;
+      display: block;
+    }
+    #status.error {
+      background-color: #ef4444;
+      color: white;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h3>Skimry Summarizer</h3>
+  <button id="extractBtn">Extract & Summarize</button>
+  <div id="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

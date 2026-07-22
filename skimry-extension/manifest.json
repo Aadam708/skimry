@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Skimry Text Extractor",
+  "version": "1.0",
+  "description": "Extracts text from the current page up to a character limit.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "cookies"
+  ],
+  "host_permissions": [
+    "http://localhost:8080/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
