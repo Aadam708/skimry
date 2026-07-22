@@ -11,4 +11,8 @@ public class MaterialRequest {
     private String rawText;
     private List<String> aiSummary;
 
+    public void setAiSummary(List<String> aiSummary) {
+        this.aiSummary = aiSummary;
+    }
+
 }
