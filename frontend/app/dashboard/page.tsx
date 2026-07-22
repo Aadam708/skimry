@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import NavbarComponent from "../components/NavbarComponent";
+import DashNavbarComponent from '../components/DashNavbarComponent';
 
 const mockSummariesFromDb = [
     { id: "1", rawText: "The company's scalability targets for Q3 are heavily reliant on migrating monolithic assets into decoupled microservices, aiming to decrease API response latency by 35% through Redis caching clusters...", date: "July 12, 2026" },
@@ -22,7 +22,7 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-pink-500/30 selection:text-pink-200">
             {/* Top Navigation Anchor */}
-            <NavbarComponent />
+            <DashNavbarComponent />
 
             {/*
                Knowledge dashboard section
