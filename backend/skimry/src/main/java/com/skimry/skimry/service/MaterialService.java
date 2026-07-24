@@ -1,5 +1,8 @@
 package com.skimry.skimry.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -41,6 +44,30 @@ public class MaterialService {
         materialRepository.save(savedMaterial);
 
         return toDto(savedMaterial);
+
+    }
+
+    public List<MaterialDto> viewMaterials(){
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (email == null){
+            throw new Error("User not authenticated");
+        }
+
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("User does not exist"));
+
+        List<Material> materials = materialRepository.findByUser(user);
+        List<MaterialDto> dtos = new ArrayList<>();
+
+        for(Material m : materials){
+
+            dtos.add(toDto(m));
+        }
+
+        return dtos;
+
+
 
     }
 

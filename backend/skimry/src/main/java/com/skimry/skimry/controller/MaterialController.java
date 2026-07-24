@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.GetMapping;
+
 
 
 @RequestMapping("api/materials")
@@ -37,22 +39,7 @@ public class MaterialController {
         this.objectMapper = objectMapper;
     }
 
-    @PostMapping("/save")
-    public ResponseEntity<?> saveMaterial(@RequestBody MaterialRequest req) {
 
-        try{
-            MaterialDto dto = materialService.saveMaterial(req);
-            return ResponseEntity.status(201).body(dto);
-        }catch(UsernameNotFoundException e){
-
-            return ResponseEntity.status(401).body(Map.of("Error","User not authenticated"));
-
-        } catch(Exception e){
-            return ResponseEntity.status(500).body(Map.of("Error", "Internal server error"));
-        }
-
-
-    }
      @PostMapping("/upload")
     public ResponseEntity<?> uploadMaterial(@RequestBody MaterialRequest req) {
 
@@ -73,6 +60,22 @@ public class MaterialController {
 
 
     }
+
+    @GetMapping("/my")
+    public ResponseEntity<?> viewMaterials() {
+
+        try{
+            List<MaterialDto> dtos = materialService.viewMaterials();
+            return ResponseEntity.ok().body(dtos);
+        }
+        catch (UsernameNotFoundException e){
+            return ResponseEntity.status(401).body(Map.of("Error", "User not authenticated"));
+        }
+        catch(Exception e){
+            return ResponseEntity.status(500).body(Map.of("Error", "Internal server error"));
+        }
+    }
+
 
 
 }
