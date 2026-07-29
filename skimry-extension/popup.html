@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <style>
     body {
-      width: 280px;
+      width: 320px;
       padding: 16px;
       background-color: #09090b;
       color: #f4f4f5;
@@ -38,10 +38,15 @@
     }
     #status {
       margin-top: 12px;
-      font-size: 11px;
+      font-size: 12px;
       padding: 8px;
-      border-radius: 4px;
+      border-radius: 6px;
       display: none;
+    }
+    #status.processing {
+      background-color: #3f3f46;
+      color: white;
+      display: block;
     }
     #status.success {
       background-color: #10b981;
@@ -53,12 +58,48 @@
       color: white;
       display: block;
     }
+    #summaryBox {
+      margin-top: 12px;
+      display: none;
+      border: 1px solid #27272a;
+      border-radius: 10px;
+      padding: 12px;
+      background: #111113;
+    }
+    #summaryBox h4 {
+      margin: 0 0 8px 0;
+      font-size: 12px;
+      color: #f9a8d4;
+    }
+    #summaryList {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #e4e4e7;
+    }
+    #sourceLink {
+      display: none;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #60a5fa;
+      text-decoration: none;
+      word-break: break-word;
+    }
   </style>
 </head>
 <body>
   <h3>Skimry Summarizer</h3>
   <button id="extractBtn">Extract & Summarize</button>
+
   <div id="status"></div>
+
+  <div id="summaryBox">
+    <h4>3 Key Points</h4>
+    <ul id="summaryList"></ul>
+    <a id="sourceLink" target="_blank" rel="noopener noreferrer">View source</a>
+  </div>
+
   <script src="popup.js"></script>
 </body>
 </html>

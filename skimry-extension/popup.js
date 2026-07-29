@@ -1,60 +1,98 @@
-document.getElementById('extractBtn').addEventListener('click', async () => {
-  // 1. Get the currently active browser tab
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+const extractBtn = document.getElementById('extractBtn');
+const statusBox = document.getElementById('status');
+const summaryBox = document.getElementById('summaryBox');
+const summaryList = document.getElementById('summaryList');
+const sourceLink = document.getElementById('sourceLink');
 
-  if (!tab || !tab.id) return;
+function setStatus(message, type) {
+  statusBox.className = type;
+  statusBox.textContent = message;
+  statusBox.style.display = 'block';
+}
 
-  // 2. Inject a script into the page to grab text content
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: extractPageText,
-  }, async (results) => {
-    if (!results || !results[0] || !results[0].result) {
-      console.log("Failed to extract content.");
+function clearSummary() {
+  summaryList.innerHTML = '';
+  summaryBox.style.display = 'none';
+  sourceLink.style.display = 'none';
+}
+
+function renderSummary(points, originalUrl) {
+  summaryList.innerHTML = '';
+  points.forEach((point) => {
+    const li = document.createElement('li');
+    li.textContent = point;
+    summaryList.appendChild(li);
+  });
+
+  sourceLink.href = originalUrl;
+  sourceLink.textContent = 'View source';
+  sourceLink.style.display = 'inline-block';
+  summaryBox.style.display = 'block';
+}
+
+extractBtn.addEventListener('click', async () => {
+  extractBtn.disabled = true;
+  clearSummary();
+  setStatus('Extracting page content...', 'processing');
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab || !tab.id) {
+      setStatus('No active tab found.', 'error');
+      extractBtn.disabled = false;
       return;
     }
 
-    const payload = results[0].result;
-
-    console.log("=== SKIMRY EXTRACTED PAYLOAD ===");
-    console.log("Source URL:", payload.originalUrl);
-    console.log("Character Count:", payload.rawText.length);
-    console.log("Truncated Raw Text:", payload.rawText);
-
-    // 3. Send the extracted content to your backend
-    try {
-      const response = await fetch('http://localhost:8080/api/materials/upload', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // CRITICAL: includes HttpOnly cookies automatically
-        body: JSON.stringify({
-          originalUrl: payload.originalUrl,
-          rawText: payload.rawText,
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log("✅ Material saved successfully:", result);
-        alert(`✅ Saved! ${result.aiSummary?.length || 0} summary points generated.`);
-      } else if (response.status === 401) {
-        console.error("❌ Not authenticated. Please log in at the website first.");
-        alert("❌ Not authenticated. Log in at http://localhost:3000 first.");
-      } else {
-        const error = await response.json();
-        console.error("❌ Error:", error);
-        alert(`❌ Error: ${error.Error || 'Unknown error'}`);
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: extractPageText,
+    }, async (results) => {
+      if (!results || !results[0] || !results[0].result) {
+        setStatus('Failed to extract content.', 'error');
+        extractBtn.disabled = false;
+        return;
       }
-    } catch (err) {
-      console.error("Network error:", err);
-      alert(`❌ Network error: ${err.message}`);
-    }
-  });
+
+      const payload = results[0].result;
+
+      setStatus('Generating summary...', 'processing');
+
+      try {
+        const response = await fetch('http://localhost:8080/api/materials/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            originalUrl: payload.originalUrl,
+            rawText: payload.rawText,
+          }),
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (response.ok) {
+          const points = Array.isArray(data?.aiSummary) ? data.aiSummary : [];
+          renderSummary(points, data?.originalUrl || payload.originalUrl);
+          setStatus('Summary ready.', 'success');
+        } else {
+          const message = data?.Error || data?.message || 'Unknown error';
+          setStatus(message, 'error');
+        }
+      } catch (err) {
+        setStatus(`Network error: ${err.message}`, 'error');
+      } finally {
+        extractBtn.disabled = false;
+      }
+    });
+  } catch (err) {
+    setStatus(`Extension error: ${err.message}`, 'error');
+    extractBtn.disabled = false;
+  }
 });
 
-// Function executed directly inside the web page environment
 function extractPageText() {
   const MAX_CHAR_LIMIT = 4000;
 
@@ -98,12 +136,6 @@ function extractPageText() {
   const safeText = cleanedText.length > MAX_CHAR_LIMIT
     ? cleanedText.slice(0, MAX_CHAR_LIMIT) + "..."
     : cleanedText;
-
-  console.log("%c[Skimry] Extracted Text Payload:", "color: #ec4899; font-weight: bold;", {
-    url: window.location.href,
-    length: safeText.length,
-    text: safeText
-  });
 
   return {
     originalUrl: window.location.href,
