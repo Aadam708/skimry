@@ -1,5 +1,6 @@
 package com.skimry.skimry.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +35,15 @@ public class MaterialService {
         User currentUser = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("User does not exist"));
 
-        
+        LocalDate now = LocalDate.now();
+
+        if (currentUser.getLastResetDate() == null ||
+            now.getMonth() != currentUser.getLastResetDate().getMonth() ||
+            now.getYear() != currentUser.getLastResetDate().getYear()) {
+
+            currentUser.setPostsSummarisedThisMonth(0);
+            currentUser.setLastResetDate(now);
+        }
 
         if (currentUser.getPostsSummarisedThisMonth() >= 3 && "free".equals(currentUser.getTier())) {
             throw new IllegalStateException("You have exceeded summary generation for this month!");

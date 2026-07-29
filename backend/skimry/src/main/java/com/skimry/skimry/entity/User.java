@@ -1,5 +1,6 @@
 package com.skimry.skimry.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -38,6 +39,9 @@ public class User {
 
     @Column(name = "password", nullable = false)
     private String password;
+
+    @Column(name = "last_reset_date")
+    private LocalDate lastResetDate = LocalDate.now();
 
 
 }
