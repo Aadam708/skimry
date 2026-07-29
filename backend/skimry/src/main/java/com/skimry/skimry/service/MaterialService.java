@@ -31,19 +31,31 @@ public class MaterialService {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        User currentUser = userRepository.findByEmail(email).
-                            orElseThrow(()-> new UsernameNotFoundException("User does not exist"));
+        User currentUser = userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("User does not exist"));
+
+        
+
+        if (currentUser.getPostsSummarisedThisMonth() >= 3 && "free".equals(currentUser.getTier())) {
+            throw new IllegalStateException("You have exceeded summary generation for this month!");
+        }
+
+        if(currentUser.getPostsSummarisedThisMonth() >= 110 && currentUser.getTier().equals("pro")){
+            throw new IllegalStateException("You have exceeded summary generation for this month!");
+        }
 
         Material savedMaterial = new Material();
-
         savedMaterial.setUser(currentUser);
         savedMaterial.setOriginalUrl(materialRequest.getOriginalUrl());
         savedMaterial.setRawText(materialRequest.getRawText());
         savedMaterial.setAiSummary(materialRequest.getAiSummary());
 
-        materialRepository.save(savedMaterial);
+        Material material = materialRepository.save(savedMaterial);
 
-        return toDto(savedMaterial);
+        currentUser.setPostsSummarisedThisMonth(currentUser.getPostsSummarisedThisMonth() + 1);
+        userRepository.save(currentUser);
+
+        return toDto(material);
 
     }
 

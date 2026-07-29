@@ -42,23 +42,24 @@ public class MaterialController {
 
      @PostMapping("/upload")
     public ResponseEntity<?> uploadMaterial(@RequestBody MaterialRequest req) {
-
-        try{
+        try {
             CompletableFuture<String> future = geminiService.generateSummary(req.getRawText());
             String jsonRes = future.get();
             List<String> summaryList = objectMapper.readValue(jsonRes, new TypeReference<List<String>>() {});
             req.setAiSummary(summaryList);
+
             MaterialDto dto = materialService.saveMaterial(req);
             return ResponseEntity.status(201).body(dto);
-        }catch(UsernameNotFoundException e){
 
-            return ResponseEntity.status(401).body(Map.of("Error","User not authenticated"));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(Map.of("Error", e.getMessage()));
 
-        } catch(Exception e){
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(401).body(Map.of("Error", "User not authenticated"));
+
+        } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("Error", "Internal server error"));
         }
-
-
     }
 
     @GetMapping("/my")
