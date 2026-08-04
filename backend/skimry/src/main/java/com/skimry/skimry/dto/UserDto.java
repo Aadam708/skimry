@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserDto {
     String email;
+    Boolean isLoggedIn;
+    String tier;
 
 
 }

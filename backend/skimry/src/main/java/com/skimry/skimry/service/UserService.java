@@ -1,5 +1,7 @@
 package com.skimry.skimry.service;
 
+import java.util.Optional;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +40,12 @@ public class UserService {
     public UserDto toDto(User user) {
         UserDto dto = new UserDto();
         dto.setEmail(user.getEmail());
+        dto.setIsLoggedIn(false);
+        dto.setTier(user.getTier());
         return dto;
+    }
+
+    public Optional<UserDto> findByEmail(String email) {
+        return userRepository.findByEmail(email).map(entity -> toDto(entity));
     }
 }

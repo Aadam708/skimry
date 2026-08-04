@@ -41,7 +41,7 @@ export default function DashboardPage() {
           date: formatDate(item.createdAt),
         }));
 
-        setMaterials(transformedMaterials);
+        setMaterials(transformedMaterials.reverse());
       } else if (response.status === 401) {
         setError('Not authenticated. Please log in first.');
       } else {

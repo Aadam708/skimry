@@ -1,16 +1,25 @@
+'use client'
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 // Adjust the path to your logo if needed based on the components folder
 import logo from '../../public/images/logo.png';
 
 const DashNavbarComponent = () => {
+
+  const path = usePathname()
+
+  const setDesign = (pathname:String)=>{
+
+    return "px-3 py-2 transition-colors duration-500 " + (pathname === path ? "text-pink-500" :"text-white hover:text-pink-500")
+  }
   return (
     <header className="flex w-full items-center justify-between p-6 px-8 absolute top-0 left-0 right-0 z-50">
       {/* Top Left: Logo */}
       <div className="flex items-center">
-        <Link href="/">
+        <Link href="/dashboard">
           <Image
             src={logo}
             alt="Skimry Logo"
@@ -24,13 +33,13 @@ const DashNavbarComponent = () => {
 
       {/* Top Right: Nav Items with 5px gap */}
       <nav className="flex gap-1.25 text-sm md:text-base font-medium">
-        <Link href="/extension" className="px-3 py-2 text-white hover:text-pink-500 transition-colors duration-500">
+        <Link href="/extension" className={setDesign("/extension")}>
           Extension
         </Link>
-        <Link href="/pricing" className="px-3 py-2 text-white hover:text-pink-500 transition-colors duration-500">
+        <Link href="/pricing" className={setDesign("/pricing")}>
           Plans
         </Link>
-        <Link href="logout" className="px-3 py-2 text-white hover:text-pink-500 transition-colors duration-500">
+        <Link href="logout" className={setDesign("/logout")}>
           Logout
         </Link>
       </nav>
