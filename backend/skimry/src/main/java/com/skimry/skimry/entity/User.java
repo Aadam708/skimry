@@ -25,6 +25,9 @@ public class User {
     @Column(name = "stripe_customer_id")
     private String stripeCustomerId;
 
+    @Column(name = "stripe_subscription_id")
+    private String stripeSubscriptionId;
+
     @Column(name = "tier")
     private String tier = "free";
 
@@ -42,6 +45,5 @@ public class User {
 
     @Column(name = "last_reset_date")
     private LocalDate lastResetDate = LocalDate.now();
-
 
 }
