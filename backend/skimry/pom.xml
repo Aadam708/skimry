@@ -36,6 +36,11 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.stripe</groupId>
+			<artifactId>stripe-java</artifactId>
+			<version>33.1.1</version>
+		</dependency>
 		<!-- JWT (Json Web Token) Libraries -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

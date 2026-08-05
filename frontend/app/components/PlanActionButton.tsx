@@ -21,36 +21,38 @@ export default function PlanActionButton({
     setLoading(true);
 
     try {
-      // Check session status via HttpOnly cookie
-      const res = await fetch("http://localhost:8080/api/users/me", {
+      const meRes = await fetch("http://localhost:8080/api/users/me", {
         method: "GET",
         credentials: "include",
         cache: "no-store",
       });
 
-      const isLoggedIn = res.ok;
+      if (!meRes.ok) {
+        router.push("/login?redirect=/pricing");
+        return;
+      }
+
+      if (planName.toLowerCase() === "pro") {
+        const res = await fetch("http://localhost:8080/api/payments/create-checkout-session", {
+          method: "POST",
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          throw new Error("Stripe session request failed");
+        }
+
+        const data = await res.json();
+        window.location.href = data.url;
+        return;
+      }
 
       if (planName.toLowerCase() === "free") {
-        if (isLoggedIn) {
-          router.push("/dashboard");
-        } else {
-          router.push("/login");
-        }
-      } else {
-        // Pro Plan Flow
-        if (isLoggedIn) {
-          router.push("/pay");
-        } else {
-          router.push("/login?redirect=/pay");
-        }
+        router.push("/dashboard");
+        return;
       }
-    } catch (err) {
-      // Fallback on network/fetch failure
-      if (planName.toLowerCase() === "free") {
-        router.push("/login");
-      } else {
-        router.push("/login?redirect=/pay");
-      }
+    } catch {
+      router.push("/login?redirect=/pricing");
     } finally {
       setLoading(false);
     }

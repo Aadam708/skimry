@@ -1,6 +1,6 @@
 import React from "react";
 import ConditionalNavbar from "../components/ConditionalNavbar";
-import PlanActionButton from "../components/PlanCard";
+import PlanActionButton from "../components/PlanActionButton";
 
 const pricingPlans = [
   {
