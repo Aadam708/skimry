@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import ConditionalNavbar from "../components/ConditionalNavbar";
 import PlanActionButton from "../components/PlanActionButton";
 
@@ -7,7 +9,7 @@ const pricingPlans = [
     name: "Free",
     price: "£0",
     cadence: "/mo",
-    badge: "Current plan",
+    badge: "Free forever",
     description: "For quick reads and casual articles.",
     features: [
       "3 summaries per month",
@@ -36,6 +38,41 @@ const pricingPlans = [
 ];
 
 export default function PricingPage() {
+  const [currentTier, setCurrentTier] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/api/users/me", {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          setCurrentTier(null);
+          return;
+        }
+
+        const data = await res.json();
+
+        if(typeof data?.tier === "string"){
+          setCurrentTier(data.tier);
+
+          if(currentTier?.toLowerCase() === "pro") {
+
+          }
+
+        }
+
+      } catch {
+        setCurrentTier(null);
+      }
+    };
+
+    loadCurrentUser();
+  }, []);
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-pink-500/30 selection:text-pink-200">
       <ConditionalNavbar />
@@ -121,8 +158,13 @@ export default function PricingPage() {
                 {/* Embedded Client Component */}
                 <PlanActionButton
                   planName={plan.name}
-                  ctaText={plan.cta}
+                  ctaText={
+                    plan.name.toLowerCase() === "pro" && currentTier?.toLowerCase() === "pro"
+                      ? "Cancel subscription"
+                      : plan.cta
+                  }
                   isFeatured={plan.featured}
+                  currentTier={currentTier}
                 />
               </div>
             </div>

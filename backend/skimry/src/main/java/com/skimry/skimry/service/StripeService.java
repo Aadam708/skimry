@@ -61,4 +61,17 @@ public class StripeService {
         // Return the checkout page URL (e.g. https://checkout.stripe.com/c/pay/cs_test_...)
         return session.getUrl();
     }
+
+    public String createPortalSession(String stripeCustomerId) throws StripeException {
+        com.stripe.param.billingportal.SessionCreateParams params =
+            com.stripe.param.billingportal.SessionCreateParams.builder()
+                .setCustomer(stripeCustomerId)
+                .setReturnUrl(frontendUrl+ "/dashboard?payment=cancelled")
+                .build();
+
+        com.stripe.model.billingportal.Session portalSession =
+            com.stripe.model.billingportal.Session.create(params);
+
+        return portalSession.getUrl();
+    }
 }

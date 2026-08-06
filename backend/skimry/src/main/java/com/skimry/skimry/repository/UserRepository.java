@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.skimry.skimry.entity.User;
 
+
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+    Optional<User> findByStripeCustomerIdAndStripeCustomerIdIsNotNull(String stripeCustomerId);
 }

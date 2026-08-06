@@ -66,8 +66,21 @@ public class UserService {
 
         user.setStripeCustomerId(stripeCustomerId);
         user.setStripeSubscriptionId(subscriptionId);
-        user.setTier("pro"); 
+        user.setTier("pro");
 
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void handleSubscriptionCanceled(String stripeCustomerId) {
+
+        User user = userRepository.findByStripeCustomerIdAndStripeCustomerIdIsNotNull(stripeCustomerId)
+        .orElseThrow(() -> new EntityNotFoundException("No record of customer with this stripe id "));
+
+        user.setTier("free");
+        user.setStripeSubscriptionId(null);
+
+        userRepository.save(user);
+
     }
 }

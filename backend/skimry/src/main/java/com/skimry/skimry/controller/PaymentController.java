@@ -41,4 +41,23 @@ public class PaymentController {
         String checkoutUrl = stripeService.createCheckoutSession(userDto);
         return ResponseEntity.ok(Map.of("url", checkoutUrl));
     }
+    @PostMapping("/create-portal-session")
+    public ResponseEntity<Map<String, String>> createPortalSession(@AuthenticationPrincipal UserDetails principal)
+            throws StripeException {
+
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
+        }
+
+        StripeUserDto userDto = userService.getUserByEmail(principal.getUsername());
+
+        // Prevent passing null customer ID to Stripe
+        if (userDto.getStripeCustomerId() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "User has no active Stripe customer account"));
+        }
+
+        String portalUrl = stripeService.createPortalSession(userDto.getStripeCustomerId());
+        return ResponseEntity.ok(Map.of("url", portalUrl));
+    }
 }
