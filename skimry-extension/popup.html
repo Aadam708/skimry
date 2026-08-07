@@ -11,12 +11,46 @@
       font-family: system-ui, -apple-system, sans-serif;
       margin: 0;
     }
+
     h3 {
       margin: 0 0 12px 0;
       font-size: 14px;
       font-weight: 700;
       color: #ec4899;
     }
+
+    .section {
+      display: none;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .input-label {
+      font-size: 11px;
+      color: #d4d4d8;
+      font-weight: 600;
+    }
+
+    .input-field {
+      border: 1px solid #3f3f46;
+      border-radius: 8px;
+      background: #18181b;
+      color: #fafafa;
+      font-size: 12px;
+      padding: 9px 10px;
+      outline: none;
+    }
+
+    .input-field:focus {
+      border-color: #ec4899;
+      box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.25);
+    }
+
     button {
       width: 100%;
       padding: 10px;
@@ -29,13 +63,29 @@
       cursor: pointer;
       transition: opacity 0.2s;
     }
+
     button:hover {
       opacity: 0.9;
     }
+
     button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    .register-link {
+      display: block;
+      margin-top: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: #60a5fa;
+      text-decoration: none;
+    }
+
+    .register-link:hover {
+      text-decoration: underline;
+    }
+
     #status {
       margin-top: 12px;
       font-size: 12px;
@@ -43,21 +93,25 @@
       border-radius: 6px;
       display: none;
     }
+
     #status.processing {
       background-color: #3f3f46;
       color: white;
       display: block;
     }
+
     #status.success {
       background-color: #10b981;
       color: white;
       display: block;
     }
+
     #status.error {
       background-color: #ef4444;
       color: white;
       display: block;
     }
+
     #summaryBox {
       margin-top: 12px;
       display: none;
@@ -66,11 +120,13 @@
       padding: 12px;
       background: #111113;
     }
+
     #summaryBox h4 {
       margin: 0 0 8px 0;
       font-size: 12px;
       color: #f9a8d4;
     }
+
     #summaryList {
       margin: 0;
       padding-left: 18px;
@@ -78,6 +134,7 @@
       line-height: 1.5;
       color: #e4e4e7;
     }
+
     #sourceLink {
       display: none;
       margin-top: 10px;
@@ -90,15 +147,38 @@
 </head>
 <body>
   <h3>Skimry Summarizer</h3>
-  <button id="extractBtn">Extract & Summarize</button>
+
+  <div id="authSection" class="section">
+    <form id="loginForm">
+      <div class="input-group">
+        <label for="loginEmail" class="input-label">Email</label>
+        <input id="loginEmail" class="input-field" type="email" placeholder="you@example.com" required />
+      </div>
+
+      <div class="input-group">
+        <label for="loginPassword" class="input-label">Password</label>
+        <input id="loginPassword" class="input-field" type="password" placeholder="Enter your password" required />
+      </div>
+
+      <button id="loginBtn" type="submit">Login</button>
+    </form>
+
+    <a class="register-link" href="http://localhost:3000/register" target="_blank" rel="noopener noreferrer">
+      Don't have an account? Register
+    </a>
+  </div>
+
+  <div id="extractSection" class="section">
+    <button id="extractBtn">Extract & Summarize</button>
+
+    <div id="summaryBox">
+      <h4>3 Key Points</h4>
+      <ul id="summaryList"></ul>
+      <a id="sourceLink" target="_blank" rel="noopener noreferrer">View source</a>
+    </div>
+  </div>
 
   <div id="status"></div>
-
-  <div id="summaryBox">
-    <h4>3 Key Points</h4>
-    <ul id="summaryList"></ul>
-    <a id="sourceLink" target="_blank" rel="noopener noreferrer">View source</a>
-  </div>
 
   <script src="popup.js"></script>
 </body>
