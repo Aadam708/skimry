@@ -11,20 +11,24 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.skimry.skimry.security.JwtAuthenticationFilter;
+import com.skimry.skimry.security.RateLimitingFilter;
 
 @Configuration // Tells Spring this is a blueprint file for generating Beans
 @EnableWebSecurity // Turns on Spring Security's web firewall
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private RateLimitingFilter rateLimitingFilter;
 
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter , RateLimitingFilter rateLimitingFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.rateLimitingFilter = rateLimitingFilter;
     }
 
     @Bean
@@ -48,6 +52,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/webhooks/stripe").permitAll()
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(rateLimitingFilter, LogoutFilter.class)
 
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
