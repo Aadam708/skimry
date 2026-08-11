@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.skimry.skimry.dto.AuthRequest;
+import com.skimry.skimry.dto.ForgotPasswordRequest;
+import com.skimry.skimry.dto.ResetPasswordRequest;
 import com.skimry.skimry.dto.UserDto;
 import com.skimry.skimry.security.JwtUtil;
 import com.skimry.skimry.service.UserService;
@@ -27,7 +29,8 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
-    public AuthController(UserService userService, AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+    public AuthController(UserService userService, AuthenticationManager authenticationManager,
+         JwtUtil jwtUtil) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
@@ -77,6 +80,25 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(Map.of("message", "logged out successfully"));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        String email = request.email();
+
+        userService.processForgotPassword(email);
+
+        return ResponseEntity.ok("If an account exists with that email, a password reset code has been sent.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest req) {
+        try {
+            userService.resetPassword(req.email(), req.otp(), req.newPassword());
+            return ResponseEntity.ok(Map.of("message", "Password reset successfully. You can now log in."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
 

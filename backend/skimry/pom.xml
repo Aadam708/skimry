@@ -47,6 +47,13 @@
 			<artifactId>stripe-java</artifactId>
 			<version>33.1.1</version>
 		</dependency>
+
+		<!-- Email sending from resend api -->
+		<dependency>
+			<groupId>com.resend</groupId>
+			<artifactId>resend-java</artifactId>
+			<version>3.1.0</version>
+		</dependency>
 		<!-- JWT (Json Web Token) Libraries -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

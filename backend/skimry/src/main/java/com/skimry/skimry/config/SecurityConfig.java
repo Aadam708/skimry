@@ -18,6 +18,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import com.skimry.skimry.security.JwtAuthenticationFilter;
 import com.skimry.skimry.security.RateLimitingFilter;
 
+import jakarta.servlet.DispatcherType;
+
 @Configuration // Tells Spring this is a blueprint file for generating Beans
 @EnableWebSecurity // Turns on Spring Security's web firewall
 public class SecurityConfig {
@@ -50,6 +52,7 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/webhooks/stripe").permitAll()
+                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(rateLimitingFilter, LogoutFilter.class)

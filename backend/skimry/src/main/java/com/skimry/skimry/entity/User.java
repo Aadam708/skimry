@@ -46,4 +46,10 @@ public class User {
     @Column(name = "last_reset_date")
     private LocalDate lastResetDate = LocalDate.now();
 
+    @Column(name = "reset_otp") 
+    private String resetOtp;
+
+    @Column(name = "reset_otp_expiry")
+    private LocalDateTime resetOtpExpiry;
+
 }
