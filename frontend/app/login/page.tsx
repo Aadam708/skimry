@@ -1,10 +1,9 @@
-
-
 "use client";
 
-import { useState, type ChangeEvent, type SubmitEvent } from "react";
+import { useState, useEffect, type ChangeEvent, type SubmitEvent } from "react";
 import NavbarComponent from "../components/NavbarComponent";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type AuthInputProps = {
 	id: string;
@@ -50,12 +49,19 @@ export default function LoginPage() {
 
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [error, setError] = useState("");
 	const router = useRouter();
 
-	const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
-		e.preventDefault();
+	useEffect(() => {
+		setError("");
+	}, [email, password]);
 
-		const res = await fetch("http://localhost:8080/api/auth/login", {
+	const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
+
+		e.preventDefault();
+		setError("");
+		try{
+			const res = await fetch("http://localhost:8080/api/auth/login", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -66,13 +72,23 @@ export default function LoginPage() {
 				password,
 			}),
 		});
+		const contentType = res.headers.get("content-type") || "";
+    	const body = contentType.includes("application/json") ? await res.json().catch(() => null) : await res.text().catch(() => null);
+    	const message = (body && (body.message || body.Error || body.error)) || (typeof body === "string" ? body : null);
 
 		if (!res.ok) {
-			console.error("Login failed", await res.text());
+			setError(message || `Login Failed (${res.status})`);
+
 			return;
 		}
 
 		router.push("dashboard");
+
+		}
+		catch(error:any){
+
+			setError("Unable to process request please try again later")
+		}
 
 	};
 
@@ -117,6 +133,13 @@ export default function LoginPage() {
 							Login
 						</button>
 					</form>
+					{error && (
+						<div className="mt-3 text-sm px-4 py-3 bg-red-200 border border-red-200 rounded-lg text-red-700 flex items-center justify-center gap-2">
+							<span className="font-medium"></span> {error}
+						</div>
+					)}
+
+					<Link href="/forgot-password" className="text-white hover:text-cyan-300 transition-colors duration-500">Forgot Password ?</Link>
 				</section>
 			</main>
 		</div>

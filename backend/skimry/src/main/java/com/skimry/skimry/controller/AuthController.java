@@ -49,7 +49,7 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
             );
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(401).body(Map.of("message", "invalid credentials"));
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid Credentials"));
         }
 
         String token = jwtUtil.generateToken(req.getEmail());
