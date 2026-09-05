@@ -7,7 +7,11 @@ import { usePathname } from "next/navigation";
 
 import logo from "../../public/images/logo.png";
 
-const NavbarComponent = () => {
+type NavbarProps = {
+  showReturnHome?: boolean;
+};
+
+const NavbarComponent = ({ showReturnHome = false }: NavbarProps) => {
   const pathname = usePathname();
 
   const navLinkClass = (href: string) =>
@@ -16,18 +20,30 @@ const NavbarComponent = () => {
     }`;
 
   return (
-    <header className="flex w-full items-center justify-between p-6 px-8 absolute top-0 left-0 right-0 z-50">
+    <header className="absolute top-0 left-0 right-0 z-50 flex w-full items-center justify-between p-6 px-8">
       <div className="flex items-center">
-        <Link href="/">
-          <Image
-            src={logo}
-            alt="Skimry Logo"
-            width={120}
-            height={40}
-            className="object-contain w-auto h-auto"
-            priority
-          />
-        </Link>
+        {showReturnHome ? (
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-white transition-colors hover:text-pink-500 duration-500"
+          >
+            <span aria-hidden="true" className="text-2xl leading-none">
+              ←
+            </span>
+            <span className={"text-sm font-medium" + navLinkClass("/")}>Return home</span>
+          </Link>
+        ) : (
+          <Link href="/">
+            <Image
+              src={logo}
+              alt="Skimry Logo"
+              width={120}
+              height={40}
+              className="h-auto w-auto object-contain"
+              priority
+            />
+          </Link>
+        )}
       </div>
 
       <nav className="flex gap-1.25 text-sm md:text-base font-medium">

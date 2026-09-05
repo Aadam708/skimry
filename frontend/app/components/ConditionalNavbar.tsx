@@ -3,20 +3,22 @@ import { useEffect, useState } from "react";
 import NavbarComponent from "./NavbarComponent";
 import DashNavbarComponent from "./DashNavbarComponent";
 
-export default function ConditionalNavbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+type ConditionalNavbarProps = {
+  showReturnHome?: boolean;
+  loggedIn: boolean | null;
+};
 
- useEffect(() => {
+export default function ConditionalNavbar({
+  showReturnHome = false,
+  loggedIn,
+}: ConditionalNavbarProps) {
+  if (loggedIn === null) {
+    return <NavbarComponent showReturnHome={showReturnHome} />;
+  }
 
-    fetch("http://localhost:8080/api/users/me", {
-      method: "GET",
-      credentials: "include",
-      cache: "no-store",
-    })
-      .then((res) => setIsLoggedIn(res.ok))
-      .catch(() => setIsLoggedIn(false));
-  }, []);
-
-  if (isLoggedIn === null) return <NavbarComponent />;
-  return isLoggedIn ? <DashNavbarComponent /> : <NavbarComponent />;
+  return loggedIn ? (
+    <DashNavbarComponent showReturnHome={showReturnHome} />
+  ) : (
+    <NavbarComponent showReturnHome={showReturnHome} />
+  );
 }

@@ -7,7 +7,11 @@ import { usePathname } from 'next/navigation';
 // Adjust the path to your logo if needed based on the components folder
 import logo from '../../public/images/logo.png';
 
-const DashNavbarComponent = () => {
+type DashNavbarProps = {
+  showReturnHome?: boolean;
+};
+
+const DashNavbarComponent = ({ showReturnHome = false }: DashNavbarProps) => {
 
   const path = usePathname()
 
@@ -19,27 +23,40 @@ const DashNavbarComponent = () => {
     <header className="flex w-full items-center justify-between p-6 px-8 absolute top-0 left-0 right-0 z-50">
       {/* Top Left: Logo */}
       <div className="flex items-center">
-        <Link href="/dashboard">
-          <Image
-            src={logo}
-            alt="Skimry Logo"
-            width={120} // Smaller size for the navbar
-            height={40}  // Approximate height to avoid layout shift (adjust as needed)
-            className="object-contain w-auto h-auto"
-            priority
-          />
-        </Link>
+        {showReturnHome ? (
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 text-white transition-colors hover:text-pink-500 duration-500"
+          >
+            <span aria-hidden="true" className="text-2xl leading-none">
+              ←
+            </span>
+            <span className={"text-sm font-medium" + setDesign("/dashboard")}>Return home</span>
+            
+          </Link>
+        ) : (
+          <Link href="/dashboard">
+            <Image
+              src={logo}
+              alt="Skimry Logo"
+              width={120} // Smaller size for the navbar
+              height={40}  // Approximate height to avoid layout shift (adjust as needed)
+              className="object-contain w-auto h-auto"
+              priority
+            />
+          </Link>
+        )}
       </div>
 
       {/* Top Right: Nav Items with 5px gap */}
-      <nav className="flex gap-1.25 text-sm md:text-base font-medium">
+      <nav className="flex gap-1.25 text-sm font-medium md:text-base">
         <Link href="/extension" className={setDesign("/extension")}>
           Extension
         </Link>
         <Link href="/pricing" className={setDesign("/pricing")}>
           Plans
         </Link>
-        <Link href="logout" className={setDesign("/logout")}>
+        <Link href="/logout" className={setDesign("/logout")}>
           Logout
         </Link>
       </nav>

@@ -39,6 +39,7 @@ const pricingPlans = [
 
 export default function PricingPage() {
   const [currentTier, setCurrentTier] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     const loadCurrentUser = async () => {
@@ -51,6 +52,7 @@ export default function PricingPage() {
 
         if (!res.ok) {
           setCurrentTier(null);
+          setIsLoggedIn(false);
           return;
         }
 
@@ -58,6 +60,7 @@ export default function PricingPage() {
 
         if(typeof data?.tier === "string"){
           setCurrentTier(data.tier);
+          setIsLoggedIn(data?.isLoggedIn ===true);
 
           if(currentTier?.toLowerCase() === "pro") {
 
@@ -67,6 +70,7 @@ export default function PricingPage() {
 
       } catch {
         setCurrentTier(null);
+        setIsLoggedIn(false);
       }
     };
 
@@ -75,7 +79,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-pink-500/30 selection:text-pink-200">
-      <ConditionalNavbar />
+      <ConditionalNavbar showReturnHome loggedIn={isLoggedIn}/>
 
       <div className="relative mx-auto max-w-[1600px] px-6 py-24 sm:px-10 sm:py-28 lg:py-32">
         <div className="absolute top-0 left-1/4 -z-10 h-72 w-72 rounded-full bg-pink-600/10 blur-[120px] pointer-events-none" />
