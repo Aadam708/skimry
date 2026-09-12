@@ -1,5 +1,6 @@
 package com.skimry.skimry.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,6 +24,12 @@ import jakarta.servlet.DispatcherType;
 @Configuration // Tells Spring this is a blueprint file for generating Beans
 @EnableWebSecurity // Turns on Spring Security's web firewall
 public class SecurityConfig {
+
+    //App URLs
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+    @Value("${app.extension.url}")
+    private String extensionUrl;
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private RateLimitingFilter rateLimitingFilter;
@@ -68,15 +75,14 @@ public class SecurityConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins(
-                            "http://localhost:3000",
-                            "http://127.0.0.1:3000",
-                            "http://localhost:5173",
-                            "chrome-extension://blbmmiajbmppeacfbgpomhpjikceehhe"
+                            frontendUrl,
+                            extensionUrl
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowCredentials(true)
-                        .allowedHeaders("*")
-                        .exposedHeaders("Set-Cookie");
+                        .allowedHeaders("Content-Type", "Authorization", "X-Requested-With", "Cookie")
+                        .exposedHeaders("Set-Cookie")
+                        .maxAge(3600);
             }
         };
     }
