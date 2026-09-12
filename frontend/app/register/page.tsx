@@ -52,10 +52,26 @@ export default function RegisterPage() {
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [error, setError] = useState("");
 	const router = useRouter();
+	const ALLOWED_DOMAINS = [
+		'gmail.com',
+		'outlook.com',
+		'hotmail.com',
+		'yahoo.com',
+		'icloud.com',
+		'proton.me',
+		'protonmail.com'
+	];
 
 	const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setError("");
+
+		const emailDomain = email.split('@')[1]?.toLowerCase();
+
+		if (!emailDomain || !ALLOWED_DOMAINS.includes(emailDomain)) {
+			setError("Email domain not supported. Please use a standard email provider.");
+			return;
+		}
 
 		if (password !== confirmPassword) {
 			setError("Passwords do not match.");
@@ -75,8 +91,14 @@ export default function RegisterPage() {
 			});
 
 			if (!res.ok) {
-				const message = await res.text();
-				setError(message || "Registration failed.");
+				if (res.status === 400 || res.status === 409) {
+					// Specific user input errors (e.g., Email already exists)
+					const message = await res.text();
+					setError(message.includes("exists") ? "An account with this email already exists." : message);
+				} else {
+					// Generic fallback for 500 Internal Server Errors or unhandled errors
+					setError("An account with this email already exists or a server error occurred.");
+				}
 				return;
 			}
 

@@ -2,10 +2,13 @@ package com.skimry.skimry.service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.skimry.skimry.dto.AuthRequest;
 import com.skimry.skimry.dto.StripeUserDto;
@@ -29,12 +32,30 @@ public class UserService {
         this.emailService = emailService;
     }
 
+    private static final Set<String> ALLOWED_DOMAINS = Set.of(
+        "gmail.com", "outlook.com", "hotmail.com",
+        "yahoo.com", "icloud.com", "proton.me", "protonmail.com"
+    );
+
     public UserDto register(AuthRequest req) {
-        String email = req.getEmail();
+        String email = req.getEmail().trim().toLowerCase();
         String password = req.getPassword();
 
+        // 1. Domain Validation Check
+        String domain = email.contains("@") ? email.substring(email.indexOf("@") + 1) : "";
+        if (!ALLOWED_DOMAINS.contains(domain)) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Email domain not supported. Please use a standard email provider."
+            );
+        }
+
+        // 2. Existing User Check (HTTP 409 Conflict)
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new RuntimeException("User with this email already exists");
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "An account with this email already exists."
+            );
         }
 
         User user = new User();
