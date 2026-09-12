@@ -3,6 +3,7 @@
 import { useState, type ChangeEvent, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
 import NavbarComponent from "../components/NavbarComponent";
+import { fetchApi } from "../lib/api";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -14,7 +15,7 @@ export default function ForgotPasswordPage() {
     setStatus({ type: "processing", text: "Sending reset code..." });
 
     try {
-      const res = await fetch("http://localhost:8080/api/auth/forgot-password", {
+      const res = await fetchApi("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

@@ -3,6 +3,7 @@
 import { useState, type ChangeEvent, type SubmitEvent, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import NavbarComponent from "../components/NavbarComponent";
+import { fetchApi } from "../lib/api";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function ResetPasswordPage() {
     setStatus({ type: "processing", text: "Resetting password..." });
 
     try {
-      const res = await fetch("http://localhost:8080/api/auth/reset-password", {
+      const res = await fetchApi("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

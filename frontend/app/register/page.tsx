@@ -3,6 +3,7 @@
 import React, { ChangeEvent, useState, SubmitEvent } from "react";
 import NavbarComponent from "../components/NavbarComponent";
 import { useRouter } from "next/navigation";
+import { fetchApi } from "../lib/api";
 
 type AuthInputProps = {
 	id: string;
@@ -62,7 +63,7 @@ export default function RegisterPage() {
 		}
 
 		try {
-			const res = await fetch("http://localhost:8080/api/auth/register", {
+			const res = await fetchApi("/api/auth/register", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

@@ -4,6 +4,7 @@ import { useState, useEffect, type ChangeEvent, type SubmitEvent } from "react";
 import NavbarComponent from "../components/NavbarComponent";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { fetchApi } from "../lib/api";
 
 type AuthInputProps = {
 	id: string;
@@ -61,7 +62,7 @@ export default function LoginPage() {
 		e.preventDefault();
 		setError("");
 		try{
-			const res = await fetch("http://localhost:8080/api/auth/login", {
+			const res = await fetchApi("/api/auth/login", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

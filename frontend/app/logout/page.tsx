@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchApi } from "../lib/api";
 
 const page = () => {
   const router = useRouter();
@@ -11,7 +12,7 @@ const page = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/auth/logout", {
+        const res = await fetchApi("/api/auth/logout", {
           method: "POST",
           credentials: "include",
         });

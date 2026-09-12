@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import DashNavbarComponent from '../components/DashNavbarComponent';
+import { fetchApi } from '../lib/api';
 
 interface Material {
   id: string;
@@ -22,13 +23,7 @@ export default function DashboardPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:8080/api/materials/my', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetchApi('/api/materials/my');
 
       if (response.ok) {
         const data = await response.json();
@@ -53,7 +48,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  };;
 
   useEffect(() => {
     fetchMaterials();

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchApi } from "../lib/api";
 
 interface PlanActionButtonProps {
   planName: string;
@@ -32,7 +33,7 @@ export default function PlanActionButton({
 
       // 1. Upgrade Path: User is on Free/other tier and wants Pro
       if (normalizedPlanName === "pro" && normalizedCurrentTier !== "pro") {
-        const res = await fetch("http://localhost:8080/api/payments/create-checkout-session", {
+        const res = await fetchApi("/api/payments/create-checkout-session", {
           method: "POST",
           credentials: "include",
         });
@@ -48,7 +49,7 @@ export default function PlanActionButton({
 
       // 2. Manage Path: User is ALREADY Pro and wants to manage/cancel subscription
       if (normalizedPlanName === "pro" && normalizedCurrentTier === "pro") {
-        const res = await fetch("http://localhost:8080/api/payments/create-portal-session", {
+        const res = await fetchApi("/api/payments/create-portal-session", {
           method: "POST",
           credentials: "include",
         });

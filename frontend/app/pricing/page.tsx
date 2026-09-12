@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import ConditionalNavbar from "../components/ConditionalNavbar";
 import PlanActionButton from "../components/PlanActionButton";
+import { fetchApi } from "../lib/api";
 
 const pricingPlans = [
   {
@@ -44,7 +45,7 @@ export default function PricingPage() {
   useEffect(() => {
     const loadCurrentUser = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/users/me", {
+        const res = await fetchApi("/api/users/me", {
           method: "GET",
           credentials: "include",
           cache: "no-store",
