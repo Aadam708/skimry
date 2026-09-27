@@ -13,29 +13,31 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.skimry.skimry.security.JwtAuthenticationFilter;
 import com.skimry.skimry.security.RateLimitingFilter;
 
 import jakarta.servlet.DispatcherType;
+import java.util.Arrays;
+import java.util.List;
 
-@Configuration // Tells Spring this is a blueprint file for generating Beans
-@EnableWebSecurity // Turns on Spring Security's web firewall
+@Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
-    //App URLs
     @Value("${app.frontend.url}")
     private String frontendUrl;
+
     @Value("${app.extension.url}")
     private String extensionUrl;
 
     private final JwtAuthenticationFilter jwtAuthFilter;
-    private RateLimitingFilter rateLimitingFilter;
+    private final RateLimitingFilter rateLimitingFilter;
 
-
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter , RateLimitingFilter rateLimitingFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, RateLimitingFilter rateLimitingFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.rateLimitingFilter = rateLimitingFilter;
     }
@@ -53,8 +55,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Disabled because we protect cookies via SameSite/HttpOnly
+            // 1. Enable CORS using our custom CorsConfigurationSource Bean below
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+            // 2. Disable standard CSRF (Protected via SameSite/HttpOnly cookies + custom header CORS)
+            .csrf(csrf -> csrf.disable())
+
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
@@ -63,27 +71,43 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .addFilterBefore(rateLimitingFilter, LogoutFilter.class)
-
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-     @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOrigins(
-                            frontendUrl,
-                            extensionUrl
-                        )
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowCredentials(true)
-                        .allowedHeaders("Content-Type", "Authorization", "X-Requested-With", "Cookie")
-                        .exposedHeaders("Set-Cookie")
-                        .maxAge(3600);
-            }
-        };
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // Origins
+        configuration.setAllowedOrigins(Arrays.asList(frontendUrl, extensionUrl));
+
+        // Methods
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // Credentials
+        configuration.setAllowCredentials(true);
+
+        // Allowed Headers (Supports standard fetch, JWT, X-Requested-With, and Cookies)
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Content-Type",
+            "Authorization",
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers"
+        ));
+
+        // Exposed Headers (So client JS can inspect Set-Cookie or auth headers if needed)
+        configuration.setExposedHeaders(List.of("Set-Cookie"));
+
+        // Cache preflight OPTIONS response for 1 hour
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

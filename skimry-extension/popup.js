@@ -62,7 +62,10 @@ async function checkLoginStatus() {
     const response = await fetch(`${API_BASE}/api/users/me`, {
       method: 'GET',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
     });
 
     if (response.status === 401) return false;
@@ -79,7 +82,10 @@ async function loginFromPopup(email, password) {
   const response = await fetch(`${API_BASE}/api/auth/login`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
     body: JSON.stringify({ email, password }),
   });
 
@@ -170,7 +176,10 @@ extractBtn.addEventListener('click', async () => {
         try {
           const response = await fetch(`${API_BASE}/api/materials/upload`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
             credentials: 'include',
             body: JSON.stringify({
               originalUrl: payload.originalUrl,

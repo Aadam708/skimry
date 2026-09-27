@@ -7,6 +7,7 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
       ...options.headers,
     },
   });
