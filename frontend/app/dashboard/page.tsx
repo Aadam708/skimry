@@ -36,7 +36,7 @@ export default function DashboardPage() {
           date: formatDate(item.createdAt),
         }));
 
-        setMaterials(transformedMaterials.reverse());
+        setMaterials(transformedMaterials);
       } else if (response.status === 401) {
         setError('Not authenticated. Please log in first.');
       } else {
@@ -93,9 +93,9 @@ export default function DashboardPage() {
           </div>
 
           <div className="w-full md:w-auto rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-3 backdrop-blur-md flex items-center justify-between md:inline-flex md:flex-col md:items-start md:justify-center min-w-40">
-            <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">Total Summaries</span>
+            <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">Latest Summaries</span>
             <span className="text-lg md:text-xl font-bold bg-linear-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent mt-0.5">
-              {materials.length} Saved
+              {materials.length} Displayed
             </span>
           </div>
         </header>

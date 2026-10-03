@@ -13,4 +13,5 @@ import java.util.List;
 public interface MaterialRepository extends JpaRepository<Material, UUID> {
 
     List<Material> findByUser(User user);
+    List<Material> findTop100ByUserOrderByCreatedAtDesc(User user);
 }

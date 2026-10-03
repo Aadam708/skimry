@@ -78,7 +78,8 @@ public class MaterialService {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("User does not exist"));
 
-        List<Material> materials = materialRepository.findByUser(user);
+
+        List<Material> materials = materialRepository.findTop100ByUserOrderByCreatedAtDesc(user);
         List<MaterialDto> dtos = new ArrayList<>();
 
         for(Material m : materials){
