@@ -47,6 +47,15 @@
 			<artifactId>stripe-java</artifactId>
 			<version>33.1.1</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-resource-server</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-jose</artifactId>
+		</dependency>
 
 		<!-- Email sending from resend api -->
 		<dependency>

@@ -1,5 +1,10 @@
 package com.skimry.skimry.service;
 
+import java.util.UUID;
+
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
@@ -25,17 +30,26 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final ClerkClient clerkClient;
+    private final JwtDecoder clerkJwtDecoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            EmailService emailService,
+            ClerkClient clerkClient,
+            JwtDecoder clerkJwtDecoder) {
+
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.clerkClient = clerkClient;
+        this.clerkJwtDecoder = clerkJwtDecoder;
     }
 
     private static final Set<String> ALLOWED_DOMAINS = Set.of(
-        "gmail.com", "outlook.com", "hotmail.com",
-        "yahoo.com", "icloud.com", "proton.me", "protonmail.com"
-    );
+            "gmail.com", "outlook.com", "hotmail.com",
+            "yahoo.com", "icloud.com", "proton.me", "protonmail.com");
 
     public UserDto register(AuthRequest req) {
         String email = req.getEmail().trim().toLowerCase();
@@ -45,17 +59,15 @@ public class UserService {
         String domain = email.contains("@") ? email.substring(email.indexOf("@") + 1) : "";
         if (!ALLOWED_DOMAINS.contains(domain)) {
             throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Email domain not supported. Please use a standard email provider."
-            );
+                    HttpStatus.BAD_REQUEST,
+                    "Email domain not supported. Please use a standard email provider.");
         }
 
         // 2. Existing User Check (HTTP 409 Conflict)
         if (userRepository.findByEmail(email).isPresent()) {
             throw new ResponseStatusException(
-                HttpStatus.CONFLICT,
-                "An account with this email already exists."
-            );
+                    HttpStatus.CONFLICT,
+                    "An account with this email already exists.");
         }
 
         User user = new User();
@@ -69,20 +81,20 @@ public class UserService {
     public void processForgotPassword(String email) {
 
         userRepository.findByEmail(email).ifPresent(user -> {
-        String otpCode = OtpUtil.generateOtp();
+            String otpCode = OtpUtil.generateOtp();
 
-        // 1. Set the OTP
-        user.setResetOtp(otpCode);
+            // 1. Set the OTP
+            user.setResetOtp(otpCode);
 
-        // 2. Set expiration to 10 minutes from now
-        user.setResetOtpExpiry(LocalDateTime.now().plusMinutes(10));
+            // 2. Set expiration to 10 minutes from now
+            user.setResetOtpExpiry(LocalDateTime.now().plusMinutes(10));
 
-        // 3. Persist to DB
-        userRepository.save(user);
+            // 3. Persist to DB
+            userRepository.save(user);
 
-        // 4. Dispatch reset email
-        emailService.sendOtpEmail(user.getEmail(), otpCode);
-    });
+            // 4. Dispatch reset email
+            emailService.sendOtpEmail(user.getEmail(), otpCode);
+        });
 
     }
 
@@ -122,6 +134,7 @@ public class UserService {
     public Optional<UserDto> findByEmail(String email) {
         return userRepository.findByEmail(email).map(entity -> toDto(entity));
     }
+
     public StripeUserDto getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User not found for email: " + email));
@@ -145,12 +158,61 @@ public class UserService {
     public void handleSubscriptionCanceled(String stripeCustomerId) {
 
         User user = userRepository.findByStripeCustomerIdAndStripeCustomerIdIsNotNull(stripeCustomerId)
-        .orElseThrow(() -> new EntityNotFoundException("No record of customer with this stripe id "));
+                .orElseThrow(() -> new EntityNotFoundException("No record of customer with this stripe id "));
 
         user.setTier("free");
         user.setStripeSubscriptionId(null);
 
         userRepository.save(user);
 
+    }
+
+    @Transactional
+    public User syncClerkUser(String clerkToken) {
+        Jwt clerkJwt;
+
+        try {
+            clerkJwt = clerkJwtDecoder.decode(clerkToken);
+        } catch (JwtException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid Clerk session token"
+            );
+        }
+
+        String clerkUserId = clerkJwt.getSubject();
+
+        if (clerkUserId == null || clerkUserId.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Clerk token does not contain a user ID"
+            );
+        }
+
+        ClerkClient.ClerkProfile clerkProfile =
+                clerkClient.getUser(clerkUserId);
+
+        String email = clerkProfile.email().trim().toLowerCase();
+
+        User user = userRepository.findByClerkUserId(clerkUserId)
+                .orElseGet(() -> userRepository.findByEmail(email)
+                        .orElse(null));
+
+        if (user == null) {
+            user = new User();
+            user.setEmail(email);
+
+            /*
+             * User.password is currently nullable=false.
+             * Clerk owns the password, so create an unusable random value.
+             */
+            user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+        } else {
+            user.setEmail(email);
+        }
+
+        user.setClerkUserId(clerkUserId);
+
+        return userRepository.save(user);
     }
 }
