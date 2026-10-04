@@ -19,7 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
-
+import org.springframework.web.server.ResponseStatusException;
 
 
 @RequestMapping("api/materials")
@@ -51,14 +51,25 @@ public class MaterialController {
             MaterialDto dto = materialService.saveMaterial(req);
             return ResponseEntity.status(201).body(dto);
 
+        } catch (ResponseStatusException e) {
+            return ResponseEntity
+                    .status(e.getStatusCode())
+                    .body(Map.of("Error", e.getReason()));
+
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(403).body(Map.of("Error", e.getMessage()));
+            return ResponseEntity
+                    .status(403)
+                    .body(Map.of("Error", e.getMessage()));
 
         } catch (UsernameNotFoundException e) {
-            return ResponseEntity.status(401).body(Map.of("Error", "User not authenticated"));
+            return ResponseEntity
+                    .status(401)
+                    .body(Map.of("Error", "User not authenticated"));
 
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("Error", "Internal server error"));
+            return ResponseEntity
+                    .status(500)
+                    .body(Map.of("Error", "Internal server error"));
         }
     }
 

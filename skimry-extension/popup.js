@@ -8,10 +8,7 @@ const sourceLink = document.getElementById('sourceLink');
 
 const authSection = document.getElementById('authSection');
 const extractSection = document.getElementById('extractSection');
-const loginForm = document.getElementById('loginForm');
-const loginEmail = document.getElementById('loginEmail');
-const loginPassword = document.getElementById('loginPassword');
-const loginBtn = document.getElementById('loginBtn');
+const openLoginBtn = document.getElementById('openLoginBtn');
 
 function setStatus(message, type) {
   statusBox.className = type;
@@ -78,24 +75,6 @@ async function checkLoginStatus() {
   }
 }
 
-async function loginFromPopup(email, password) {
-  const response = await fetch(`${API_BASE}/api/auth/login`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-    },
-    body: JSON.stringify({ email, password }),
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const msg = data?.message || data?.Error || 'Login failed';
-    throw new Error(msg);
-  }
-}
 
 async function initializePopup() {
   clearStatus();
@@ -112,28 +91,6 @@ async function initializePopup() {
   }
 }
 
-loginForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  loginBtn.disabled = true;
-  setStatus('Logging in...', 'processing');
-
-  try {
-    await loginFromPopup(loginEmail.value.trim(), loginPassword.value);
-    const loggedIn = await checkLoginStatus();
-
-    if (loggedIn) {
-      showExtractorView();
-      setStatus('Login successful. You can now summarize.', 'success');
-    } else {
-      showLoginView();
-      setStatus('Login succeeded but session check failed.', 'error');
-    }
-  } catch (err) {
-    setStatus(err.message || 'Login failed', 'error');
-  } finally {
-    loginBtn.disabled = false;
-  }
-});
 
 extractBtn.addEventListener('click', async () => {
   extractBtn.disabled = true;
@@ -265,3 +222,9 @@ function extractPageText() {
 }
 
 initializePopup();
+
+openLoginBtn.addEventListener('click', () => {
+  chrome.tabs.create({
+    url: 'http://localhost:3000/login',
+  });
+});
