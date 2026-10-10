@@ -28,8 +28,8 @@ const pricingPlans = [
     badge: "Best value",
     description: "For power users who want more volume, better flow, and a smoother workflow.",
     features: [
-      "110 summaries per month",
-      "Expanded article limits",
+      "100+ summaries per month",
+      "Expanded article usage limits",
       "Seamless high-volume research",
       "Zero commitment, cancel anytime",
     ],

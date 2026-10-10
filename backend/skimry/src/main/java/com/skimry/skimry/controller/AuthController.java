@@ -5,20 +5,14 @@ import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.skimry.skimry.dto.AuthRequest;
-import com.skimry.skimry.dto.ForgotPasswordRequest;
-import com.skimry.skimry.dto.ResetPasswordRequest;
-import com.skimry.skimry.dto.UserDto;
+
 import com.skimry.skimry.entity.User;
 import com.skimry.skimry.security.JwtUtil;
 import com.skimry.skimry.service.UserService;
@@ -29,45 +23,12 @@ import com.skimry.skimry.service.UserService;
 public class AuthController {
 
     private final UserService userService;
-    private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
-    public AuthController(UserService userService, AuthenticationManager authenticationManager,
+    public AuthController(UserService userService,
          JwtUtil jwtUtil) {
         this.userService = userService;
-        this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody AuthRequest req) {
-        UserDto savedUser = userService.register(req);
-        return ResponseEntity.ok(savedUser);
-    }
-
-   @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest req) {
-        try {
-            authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
-            );
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(401).body(Map.of("message", "Invalid Credentials"));
-        }
-
-        String token = jwtUtil.generateToken(req.getEmail());
-
-        ResponseCookie cookie = ResponseCookie.from("token", token)
-                .httpOnly(true)
-                .secure(false) // HTTP for local dev
-                .path("/")
-                .maxAge(3600)
-                .sameSite("Lax") // Lax works with secure(false) over HTTP
-                .build();
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(Map.of("message", "Login successful"));
     }
 
     @PostMapping("/logout")
@@ -83,25 +44,6 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(Map.of("message", "logged out successfully"));
-    }
-
-    @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        String email = request.email();
-
-        userService.processForgotPassword(email);
-
-        return ResponseEntity.ok("If an account exists with that email, a password reset code has been sent.");
-    }
-
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest req) {
-        try {
-            userService.resetPassword(req.email(), req.otp(), req.newPassword());
-            return ResponseEntity.ok(Map.of("message", "Password reset successfully. You can now log in."));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
     }
 
     @PostMapping("/clerk-sync")

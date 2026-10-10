@@ -16,11 +16,12 @@ public class ClerkClient {
 
     public ClerkClient(
             ObjectMapper objectMapper,
-            @Value("${clerk.secret-key}") String clerkSecretKey) {
+            @Value("${clerk.secret-key}") String clerkSecretKey,
+            @Value("${clerk.url}") String clerkUrl) {
         this.objectMapper = objectMapper;
         this.clerkSecretKey = clerkSecretKey;
         this.restClient = RestClient.builder()
-                .baseUrl("https://api.clerk.com/v1")
+                .baseUrl(clerkUrl)
                 .build();
     }
 

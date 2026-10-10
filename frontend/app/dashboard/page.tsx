@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+
 import DashNavbarComponent from '../components/DashNavbarComponent';
 import { fetchApi } from '../lib/api';
 
@@ -17,13 +20,34 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
+  const { isLoaded: clerkLoaded, isSignedIn, getToken } = useAuth();
+  const router = useRouter();
 
-  const fetchMaterials = async () => {
+  const fetchMaterials = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetchApi('/api/materials/my');
+      const clerkToken = await getToken();
+
+      if (!clerkToken) {
+        router.replace("/login");
+        return;
+      }
+
+      const syncResponse = await fetchApi("/api/auth/clerk-sync", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${clerkToken}`,
+        },
+      });
+
+      if (!syncResponse.ok) {
+        router.replace("/login");
+        return;
+      }
+
+      const response = await fetchApi("/api/materials/my");
 
       if (response.ok) {
         const data = await response.json();
@@ -37,22 +61,45 @@ export default function DashboardPage() {
         }));
 
         setMaterials(transformedMaterials);
-      } else if (response.status === 401) {
-        setError('Not authenticated. Please log in first.');
-      } else {
-        setError('Failed to fetch materials');
+        return;
       }
+
+      if (response.status === 401 || response.status === 403) {
+        router.replace("/login");
+        return;
+      }
+
+      if (response.status === 429) {
+        setError("Too many requests. Please try again shortly.");
+        return;
+      }
+
+      setError("Failed to fetch materials");
     } catch (err) {
-      console.error('Error fetching materials:', err);
-      setError('Network error. Please try again.');
+      console.error("Error fetching materials:", err);
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
-  };;
+  }, [getToken, router]);
 
   useEffect(() => {
+    if (!clerkLoaded) {
+      return;
+    }
+
+    if (!isSignedIn) {
+      router.replace("/login");
+      return;
+    }
+
     fetchMaterials();
-  }, []);
+  }, [
+    clerkLoaded,
+    isSignedIn,
+    router,
+    fetchMaterials,
+  ]);
 
   const generateTitle = (aiSummary: string[]) => {
     if (!aiSummary || aiSummary.length === 0) return 'Unknown Summary';

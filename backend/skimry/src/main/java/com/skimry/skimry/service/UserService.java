@@ -1,26 +1,21 @@
 package com.skimry.skimry.service;
 
-import java.util.UUID;
 
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
-import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.Set;
+
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.skimry.skimry.dto.AuthRequest;
 import com.skimry.skimry.dto.StripeUserDto;
 import com.skimry.skimry.dto.UserDto;
 import com.skimry.skimry.entity.User;
 import com.skimry.skimry.repository.UserRepository;
-import com.skimry.skimry.security.util.OtpUtil;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -28,100 +23,20 @@ import jakarta.persistence.EntityNotFoundException;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final EmailService emailService;
     private final ClerkClient clerkClient;
     private final JwtDecoder clerkJwtDecoder;
 
     public UserService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
             EmailService emailService,
             ClerkClient clerkClient,
             JwtDecoder clerkJwtDecoder) {
 
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.emailService = emailService;
         this.clerkClient = clerkClient;
         this.clerkJwtDecoder = clerkJwtDecoder;
     }
 
-    private static final Set<String> ALLOWED_DOMAINS = Set.of(
-            "gmail.com", "outlook.com", "hotmail.com",
-            "yahoo.com", "icloud.com", "proton.me", "protonmail.com");
-
-    public UserDto register(AuthRequest req) {
-        String email = req.getEmail().trim().toLowerCase();
-        String password = req.getPassword();
-
-        // 1. Domain Validation Check
-        String domain = email.contains("@") ? email.substring(email.indexOf("@") + 1) : "";
-        if (!ALLOWED_DOMAINS.contains(domain)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Email domain not supported. Please use a standard email provider.");
-        }
-
-        // 2. Existing User Check (HTTP 409 Conflict)
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "An account with this email already exists.");
-        }
-
-        User user = new User();
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-
-        User savedUser = userRepository.save(user);
-        return toDto(savedUser);
-    }
-
-    public void processForgotPassword(String email) {
-
-        userRepository.findByEmail(email).ifPresent(user -> {
-            String otpCode = OtpUtil.generateOtp();
-
-            // 1. Set the OTP
-            user.setResetOtp(otpCode);
-
-            // 2. Set expiration to 10 minutes from now
-            user.setResetOtpExpiry(LocalDateTime.now().plusMinutes(10));
-
-            // 3. Persist to DB
-            userRepository.save(user);
-
-            // 4. Dispatch reset email
-            emailService.sendOtpEmail(user.getEmail(), otpCode);
-        });
-
-    }
-
-    @Transactional
-    public void resetPassword(String email, String otp, String newPassword) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid request"));
-
-        // 1. Verify OTP exists and matches
-        if (user.getResetOtp() == null || !user.getResetOtp().equals(otp)) {
-            throw new IllegalArgumentException("Invalid or expired code");
-        }
-
-        // 2. Check Expiry
-        if (user.getResetOtpExpiry() == null || LocalDateTime.now().isAfter(user.getResetOtpExpiry())) {
-            throw new IllegalArgumentException("Invalid or expired code");
-        }
-
-        // 3. Encode & Update Password using PasswordEncoder
-        user.setPassword(passwordEncoder.encode(newPassword));
-
-        // 4. Clear the OTP fields so it cannot be re-used!
-        user.setResetOtp(null);
-        user.setResetOtpExpiry(null);
-
-        userRepository.save(user);
-    }
 
     public UserDto toDto(User user) {
         UserDto dto = new UserDto();
@@ -202,11 +117,7 @@ public class UserService {
             user = new User();
             user.setEmail(email);
 
-            /*
-             * User.password is currently nullable=false.
-             * Clerk owns the password, so create an unusable random value.
-             */
-            user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+            
         } else {
             user.setEmail(email);
         }
