@@ -1,34 +1,34 @@
-package com.skimry.skimry.security;
+// package com.skimry.skimry.security;
 
-import java.util.Collections;
+// import java.util.Collections;
 
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
+// import org.springframework.security.core.userdetails.UserDetailsService;
+// import org.springframework.security.core.userdetails.UsernameNotFoundException;
+// import org.springframework.stereotype.Service;
 
-import com.skimry.skimry.entity.User;
-import com.skimry.skimry.repository.UserRepository;
+// import com.skimry.skimry.entity.User;
+// import com.skimry.skimry.repository.UserRepository;
 
-@Service
-public class CustomUserDetailsService implements UserDetailsService {
+// @Service
+// public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+//     private final UserRepository userRepository;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+//     public CustomUserDetailsService(UserRepository userRepository) {
+//         this.userRepository = userRepository;
+//     }
 
-    @Override
-    public org.springframework.security.core.userdetails.User loadUserByUsername(String email)
-            throws UsernameNotFoundException {
+//     @Override
+//     public org.springframework.security.core.userdetails.User loadUserByUsername(String email)
+//             throws UsernameNotFoundException {
 
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("User does not exist with email: " + email));
+//         User user = userRepository.findByEmail(email)
+//             .orElseThrow(() -> new UsernameNotFoundException("User does not exist with email: " + email));
 
-        return (org.springframework.security.core.userdetails.User) org.springframework.security.core.userdetails.User
-            .withUsername(user.getEmail())
-            .password("")
-            .authorities(Collections.emptyList())
-            .build();
-    }
-}
+//         return (org.springframework.security.core.userdetails.User) org.springframework.security.core.userdetails.User
+//             .withUsername(user.getEmail())
+//             .password("")
+//             .authorities(Collections.emptyList())
+//             .build();
+//     }
+// }

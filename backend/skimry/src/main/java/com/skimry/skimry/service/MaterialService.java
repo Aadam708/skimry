@@ -5,9 +5,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 
 import org.springframework.web.server.ResponseStatusException;
+
+import com.skimry.skimry.security.AuthenticatedUser;
 
 @Service
 public class MaterialService {
@@ -40,16 +44,11 @@ public class MaterialService {
 
     public MaterialDto saveMaterial(MaterialRequest materialRequest) {
 
-        String email = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
+        User currentUser = getAuthenticatedUser();
 
-        enforceUserSummaryRateLimit(email);
-
-        User currentUser = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new UsernameNotFoundException("User does not exist"));
+        enforceUserSummaryRateLimit(
+                currentUser.getUserId().toString()
+        );
 
         LocalDate now = LocalDate.now();
 
@@ -84,29 +83,21 @@ public class MaterialService {
 
     }
 
-    public List<MaterialDto> viewMaterials(){
+    public List<MaterialDto> viewMaterials() {
 
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        if (email == null){
-            throw new Error("User not authenticated");
-        }
+        User user = getAuthenticatedUser();
 
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("User does not exist"));
+        List<Material> materials =
+                materialRepository
+                        .findTop100ByUserOrderByCreatedAtDesc(user);
 
-
-        List<Material> materials = materialRepository.findTop100ByUserOrderByCreatedAtDesc(user);
         List<MaterialDto> dtos = new ArrayList<>();
 
-        for(Material m : materials){
-
-            dtos.add(toDto(m));
+        for (Material material : materials) {
+            dtos.add(toDto(material));
         }
 
         return dtos;
-
-
-
     }
 
     public MaterialDto toDto(Material material){
@@ -132,9 +123,9 @@ public class MaterialService {
                 .build();
     }
 
-    private void enforceUserSummaryRateLimit(String email) {
+    private void enforceUserSummaryRateLimit(String userKey) {
         Bucket bucket = userSummaryBuckets.computeIfAbsent(
-                email,
+                userKey,
                 key -> createUserSummaryBucket()
         );
 
@@ -144,6 +135,30 @@ public class MaterialService {
                     "Too many summary requests. Please try again later."
             );
         }
+    }
+
+    private User getAuthenticatedUser() {
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        if (authentication == null
+                || !(authentication.getPrincipal()
+                instanceof AuthenticatedUser authenticatedUser)) {
+
+            throw new UsernameNotFoundException(
+                    "User is not authenticated"
+            );
+        }
+
+        UUID userId = authenticatedUser.getUserId();
+
+        return userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException(
+                                "User does not exist"
+                        ));
     }
 
 }

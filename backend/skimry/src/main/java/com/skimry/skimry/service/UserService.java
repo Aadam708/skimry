@@ -5,7 +5,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import java.util.Optional;
-
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -50,11 +50,29 @@ public class UserService {
         return userRepository.findByEmail(email).map(entity -> toDto(entity));
     }
 
+    public Optional<UserDto> findById(UUID userId) {
+        return userRepository.findById(userId)
+                .map(this::toDto);
+    }
+
     public StripeUserDto getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User not found for email: " + email));
 
         return new StripeUserDto(user.getEmail(), user.getStripeCustomerId());
+    }
+
+    public StripeUserDto getUserById(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "User not found: " + userId
+                        ));
+
+        return new StripeUserDto(
+                user.getEmail(),
+                user.getStripeCustomerId()
+        );
     }
 
     @Transactional
@@ -117,7 +135,7 @@ public class UserService {
             user = new User();
             user.setEmail(email);
 
-            
+
         } else {
             user.setEmail(email);
         }

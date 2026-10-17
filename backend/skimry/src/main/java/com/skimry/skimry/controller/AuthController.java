@@ -61,7 +61,10 @@ public class AuthController {
 
         try {
             User user = userService.syncClerkUser(clerkToken);
-            String token = jwtUtil.generateToken(user.getEmail());
+            String token = jwtUtil.generateToken(
+                    user.getEmail(),
+                    user.getUserId()
+            );
 
             ResponseCookie cookie = ResponseCookie.from("token", token)
                     .httpOnly(true)
