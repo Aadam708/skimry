@@ -25,6 +25,7 @@ export default function RegisterPage() {
           By signing up, you agree to our{" "}
           <Link
             href="/terms-of-service"
+            target="_blank"
             className="text-pink-400 underline underline-offset-2 transition-colors hover:text-pink-300"
           >
             Terms of Service

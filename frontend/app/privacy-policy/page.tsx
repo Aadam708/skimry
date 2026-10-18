@@ -100,13 +100,6 @@ export default function PrivacyPolicyPage() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <section className="mx-auto max-w-4xl px-6 py-24 sm:px-10">
-        <Link
-          href="/"
-          className="mb-10 inline-flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-pink-400"
-        >
-          <span aria-hidden="true">←</span>
-          Return home
-        </Link>
 
         <header className="border-b border-zinc-800 pb-8">
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-pink-400">

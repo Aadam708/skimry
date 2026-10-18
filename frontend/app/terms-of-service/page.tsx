@@ -14,7 +14,7 @@ const sections = [
   {
     title: "3. Subscriptions, Payments, and Billing",
     content:
-      "Payment processing, subscription management, and billing are handled securely by Stripe. Paid subscriptions renew at the selected billing interval until cancelled. You may cancel through your account settings or the Stripe Billing Portal. Payments are generally non-refundable except where required by law.",
+      "Payment processing, subscription management, and billing are handled securely by Stripe. Paid subscriptions renew at the selected billing interval until cancelled. You may cancel through the Plans Page or the Stripe Billing Portal. Payments are generally non-refundable except where required by law.",
   },
   {
     title: "4. Third-Party Infrastructure and Outages",
@@ -52,7 +52,6 @@ export default function TermsOfServicePage() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <section className="mx-auto max-w-4xl px-6 py-24 sm:px-10">
-        
 
         <header className="border-b border-zinc-800 pb-8">
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-pink-400">

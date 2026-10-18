@@ -22,6 +22,7 @@ export default function FooterComponent() {
           <div className="flex gap-4">
             <Link
               href="/terms-of-service"
+              target="_blank"
               className="transition-colors hover:text-pink-400"
             >
               Terms of Service
@@ -29,6 +30,7 @@ export default function FooterComponent() {
 
             <Link
               href="/privacy-policy"
+              target="_blank"
               className="transition-colors hover:text-pink-400"
             >
               Privacy Policy
