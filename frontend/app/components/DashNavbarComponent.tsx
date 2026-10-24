@@ -26,13 +26,12 @@ const DashNavbarComponent = ({ showReturnHome = false }: DashNavbarProps) => {
         {showReturnHome ? (
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 text-white transition-colors hover:text-pink-500 duration-500"
+            className="absolute left-6 top-6 flex items-center gap-2 text-sm  text-white transition-colors hover:text-pink-500 duration-500"
           >
-            <span aria-hidden="true" className="text-2xl leading-none">
+            <span aria-hidden="true" className="text-lg">
               ←
             </span>
-            <span className={"text-sm font-medium" + setDesign("/dashboard")}>Return home</span>
-            
+            <span>Return home</span>
           </Link>
         ) : (
           <Link href="/dashboard">

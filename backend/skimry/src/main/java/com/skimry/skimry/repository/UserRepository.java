@@ -10,5 +10,6 @@ import com.skimry.skimry.entity.User;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+    Optional<User> findByClerkUserId(String clerkUserId);
     Optional<User> findByStripeCustomerIdAndStripeCustomerIdIsNotNull(String stripeCustomerId);
 }

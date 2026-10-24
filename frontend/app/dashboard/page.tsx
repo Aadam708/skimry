@@ -1,8 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import DashNavbarComponent from '../components/DashNavbarComponent';
-import { fetchApi } from '../lib/api';
+import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+
+import DashNavbarComponent from "../components/DashNavbarComponent";
+import { fetchApi } from "../lib/api";
 
 interface Material {
   id: string;
@@ -16,14 +19,38 @@ export default function DashboardPage() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
+  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(
+    null,
+  );
+  const { isLoaded: clerkLoaded, isSignedIn, getToken } = useAuth();
+  const router = useRouter();
+  const extensionUrl = process.env.NEXT_PUBLIC_EXTENSION_URL;
 
-  const fetchMaterials = async () => {
+  const fetchMaterials = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetchApi('/api/materials/my');
+      const clerkToken = await getToken();
+
+      if (!clerkToken) {
+        router.replace("/login");
+        return;
+      }
+
+      const syncResponse = await fetchApi("/api/auth/clerk-sync", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${clerkToken}`,
+        },
+      });
+
+      if (!syncResponse.ok) {
+        router.replace("/login");
+        return;
+      }
+
+      const response = await fetchApi("/api/materials/my");
 
       if (response.ok) {
         const data = await response.json();
@@ -37,25 +64,43 @@ export default function DashboardPage() {
         }));
 
         setMaterials(transformedMaterials);
-      } else if (response.status === 401) {
-        setError('Not authenticated. Please log in first.');
-      } else {
-        setError('Failed to fetch materials');
+        return;
       }
+
+      if (response.status === 401 || response.status === 403) {
+        router.replace("/login");
+        return;
+      }
+
+      if (response.status === 429) {
+        setError("Too many requests. Please try again shortly.");
+        return;
+      }
+
+      setError("Failed to fetch materials");
     } catch (err) {
-      console.error('Error fetching materials:', err);
-      setError('Network error. Please try again.');
+      console.error("Error fetching materials:", err);
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
-  };;
+  }, [getToken, router]);
 
   useEffect(() => {
+    if (!clerkLoaded) {
+      return;
+    }
+
+    if (!isSignedIn) {
+      router.replace("/login");
+      return;
+    }
+
     fetchMaterials();
-  }, []);
+  }, [clerkLoaded, isSignedIn, router, fetchMaterials]);
 
   const generateTitle = (aiSummary: string[]) => {
-    if (!aiSummary || aiSummary.length === 0) return 'Unknown Summary';
+    if (!aiSummary || aiSummary.length === 0) return "Unknown Summary";
 
     const firstPoint = aiSummary[0];
     const words = firstPoint.split(" ");
@@ -66,10 +111,10 @@ export default function DashboardPage() {
 
   const formatDate = (isoDate: string) => {
     const date = new Date(isoDate);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -78,7 +123,6 @@ export default function DashboardPage() {
       <DashNavbarComponent />
 
       <div className="relative mx-auto max-w-[1600px] px-6 pt-24 pb-12 sm:px-10 sm:pt-28 lg:pb-16">
-
         <div className="absolute top-0 left-1/4 -z-10 h-72 w-72 rounded-full bg-pink-600/10 blur-[120px] pointer-events-none" />
         <div className="absolute top-1/3 right-1/4 -z-10 h-96 w-96 rounded-full bg-purple-600/10 blur-[150px] pointer-events-none" />
 
@@ -88,12 +132,15 @@ export default function DashboardPage() {
               Knowledge Dashboard
             </h1>
             <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-              Review and access your compressed insights from our chrome extension.
+              Review and access your compressed insights from our chrome
+              extension.
             </p>
           </div>
 
           <div className="w-full md:w-auto rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-3 backdrop-blur-md flex items-center justify-between md:inline-flex md:flex-col md:items-start md:justify-center min-w-40">
-            <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">Latest Summaries</span>
+            <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">
+              Latest Summaries
+            </span>
             <span className="text-lg md:text-xl font-bold bg-linear-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent mt-0.5">
               {materials.length} Displayed
             </span>
@@ -127,10 +174,28 @@ export default function DashboardPage() {
               <div className="h-12 w-12 rounded-full bg-pink-500/10 flex items-center justify-center">
                 <span className="text-2xl">📝</span>
               </div>
-              <h3 className="text-lg font-semibold text-zinc-200">No materials yet</h3>
-              <p className="text-sm text-zinc-400 max-w-md">
-                Use the Skimry Chrome extension to extract and summarize content from any website.
+              <h3 className="mt-4 text-lg font-semibold text-zinc-200">
+                No materials yet
+              </h3>
+
+              <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                Start building your knowledge library with the Skimry Chrome
+                extension.
               </p>
+
+              {extensionUrl && (
+                <a
+                  href={extensionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 inline-flex items-center justify-center rounded-lg bg-pink-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-pink-500"
+                >
+                  Get the Chrome extension
+                  <span aria-hidden="true" className="ml-2">
+                    →
+                  </span>
+                </a>
+              )}
             </div>
           </div>
         )}
@@ -207,8 +272,18 @@ export default function DashboardPage() {
               onClick={() => setSelectedMaterial(null)}
               className="absolute top-4 right-4 z-10 text-zinc-400 hover:text-white transition-colors"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
 
@@ -219,7 +294,9 @@ export default function DashboardPage() {
                   <h2 className="text-2xl font-bold text-zinc-100 mb-2 leading-snug">
                     {selectedMaterial.title}
                   </h2>
-                  <p className="text-sm text-zinc-400">{selectedMaterial.date}</p>
+                  <p className="text-sm text-zinc-400">
+                    {selectedMaterial.date}
+                  </p>
                 </div>
               </div>
             </div>
@@ -236,7 +313,9 @@ export default function DashboardPage() {
                       <span className="text-pink-500 font-bold shrink-0 mt-0.5">
                         {idx + 1}.
                       </span>
-                      <span className="text-zinc-300 leading-relaxed">{point}</span>
+                      <span className="text-zinc-300 leading-relaxed">
+                        {point}
+                      </span>
                     </li>
                   ))}
                 </ul>

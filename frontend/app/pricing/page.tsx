@@ -28,8 +28,8 @@ const pricingPlans = [
     badge: "Best value",
     description: "For power users who want more volume, better flow, and a smoother workflow.",
     features: [
-      "110 summaries per month",
-      "Expanded article limits",
+      "100+ summaries per month",
+      "Expanded article usage limits",
       "Seamless high-volume research",
       "Zero commitment, cancel anytime",
     ],
@@ -45,30 +45,26 @@ export default function PricingPage() {
   useEffect(() => {
     const loadCurrentUser = async () => {
       try {
-        const res = await fetchApi("/api/users/me", {
+        const response = await fetchApi("/api/users/me", {
           method: "GET",
-          credentials: "include",
           cache: "no-store",
         });
 
-        if (!res.ok) {
+        if (!response.ok) {
           setCurrentTier(null);
-          setIsLoggedIn(false);
           return;
         }
 
-        const data = await res.json();
+        const data = await response.json();
 
-        if(typeof data?.tier === "string"){
+        if (typeof data?.tier === "string") {
           setCurrentTier(data.tier);
-          setIsLoggedIn(data?.isLoggedIn ===true);
+          setIsLoggedIn(data?.isLoggedIn === true);
 
-          if(currentTier?.toLowerCase() === "pro") {
-
+          if (currentTier?.toLowerCase() === "pro") {
+            // do nothing
           }
-
         }
-
       } catch {
         setCurrentTier(null);
         setIsLoggedIn(false);
@@ -80,7 +76,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-pink-500/30 selection:text-pink-200">
-      <ConditionalNavbar showReturnHome loggedIn={isLoggedIn}/>
+      <ConditionalNavbar showReturnHome />
 
       <div className="relative mx-auto max-w-[1600px] px-6 py-24 sm:px-10 sm:py-28 lg:py-32">
         <div className="absolute top-0 left-1/4 -z-10 h-72 w-72 rounded-full bg-pink-600/10 blur-[120px] pointer-events-none" />

@@ -34,22 +34,14 @@ public class User {
     @Column(name = "posts_summarised_this_month")
     private Integer postsSummarisedThisMonth = 0;
 
-    @Column(name = "subscription_ends_at")
-    private LocalDateTime subscriptionEndsAt;
-
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @Column(name = "password", nullable = false)
-    private String password;
 
     @Column(name = "last_reset_date")
     private LocalDate lastResetDate = LocalDate.now();
 
-    @Column(name = "reset_otp") 
-    private String resetOtp;
 
-    @Column(name = "reset_otp_expiry")
-    private LocalDateTime resetOtpExpiry;
+    @Column(name = "clerk_user_id", unique = true)
+    private String clerkUserId;
 
 }

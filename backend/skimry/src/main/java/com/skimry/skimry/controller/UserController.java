@@ -6,11 +6,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.skimry.skimry.security.AuthenticatedUser;
 import com.skimry.skimry.service.UserService;
 
 @RestController
@@ -24,13 +24,14 @@ public class UserController {
     }
 
     @GetMapping("/api/users/me")
-    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails principal) {
+    public ResponseEntity<?> getCurrentUser(
+        @AuthenticationPrincipal AuthenticatedUser principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("isLoggedIn", false));
         }
 
         // Prefer service method that returns Optional<UserDto> or UserDto by email
-        var opt = userService.findByEmail(principal.getUsername());
+        var opt = userService.findById(principal.getUserId());
         return opt.map(currentUser -> ResponseEntity.ok(Map.of(
                 "email", currentUser.getEmail(),
                 "tier", currentUser.getTier(),

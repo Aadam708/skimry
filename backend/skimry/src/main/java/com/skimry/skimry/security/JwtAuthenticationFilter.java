@@ -1,5 +1,7 @@
 package com.skimry.skimry.security;
 
+import com.skimry.skimry.entity.User;
+import com.skimry.skimry.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -7,67 +9,92 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final CustomUserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
-    // Injecting my jwtutil and userdetails service
-    public JwtAuthenticationFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(
+            JwtUtil jwtUtil,
+            UserRepository userRepository) {
+
         this.jwtUtil = jwtUtil;
-        this.userDetailsService = userDetailsService;
+        this.userRepository = userRepository;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain)
+            throws ServletException, IOException {
 
-        String username = null;
-        String jwt = null;
+        String jwt = getTokenCookie(request);
 
-        // my jwt stored in http cookie for security
-        if (jwt == null && request.getCookies() != null) {
+        if (jwt != null
+                && SecurityContextHolder
+                .getContext()
+                .getAuthentication() == null
+                && jwtUtil.validateToken(jwt)) {
 
-            for(Cookie cookie: request.getCookies()){
+            try {
+                UUID userId = jwtUtil.getUserIdFromToken(jwt);
 
-                if("token".equals(cookie.getName())){
-                    jwt = cookie.getValue();
-                    break;
+                User user = userRepository.findById(userId)
+                        .orElse(null);
+
+                if (user != null) {
+                    AuthenticatedUser authenticatedUser =
+                            new AuthenticatedUser(
+                                    user.getUserId(),
+                                    user.getEmail()
+                            );
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    authenticatedUser,
+                                    null,
+                                    authenticatedUser.getAuthorities()
+                            );
+
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
+                    );
+
+                    SecurityContextHolder
+                            .getContext()
+                            .setAuthentication(authentication);
                 }
+
+            } catch (IllegalArgumentException exception) {
+                // Invalid or legacy JWT without a valid userId claim.
+                SecurityContextHolder.clearContext();
             }
         }
 
-        // If we found a username and the user isn't already authenticated in this request session
-        if (jwt != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-
-            // Validate the token against the key and structural parameters
-            if (jwtUtil.validateToken(jwt)) {
-                username = jwtUtil.getUsernameFromToken(jwt);
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // Hand the user details over to the SecurityContextHolder context shield
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-        }
-
-        // Pass the request down the pipeline to the controllers
         filterChain.doFilter(request, response);
+    }
+
+    private String getTokenCookie(HttpServletRequest request) {
+        if (request.getCookies() == null) {
+            return null;
+        }
+
+        for (Cookie cookie : request.getCookies()) {
+            if ("token".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+
+        return null;
     }
 }
