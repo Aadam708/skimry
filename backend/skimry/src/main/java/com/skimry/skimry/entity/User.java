@@ -34,9 +34,6 @@ public class User {
     @Column(name = "posts_summarised_this_month")
     private Integer postsSummarisedThisMonth = 0;
 
-    @Column(name = "subscription_ends_at")
-    private LocalDateTime subscriptionEndsAt;
-
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 

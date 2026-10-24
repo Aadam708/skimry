@@ -1,5 +1,6 @@
 import Image from "next/image";
 import NavbarComponent from "./components/NavbarComponent";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -32,14 +33,18 @@ export default function Home() {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-6 text-lg font-medium">
           {/* Purple Glow Hover */}
-          <button className="rounded-full border border-white bg-transparent px-8 py-3 text-white transition-all duration-300 hover:border-purple-600 hover:bg-zinc-950/50 hover:shadow-[0_0_20px_rgba(147,51,234,0.6)] hover:cursor-pointer">
-            See our plans
-          </button>
+          <Link href="pricing">
+            <button className="rounded-full border border-white bg-transparent px-8 py-3 text-white transition-colors duration-500 hover:border-purple-600 hover:bg-zinc-950/50 hover:shadow-[0_0_20px_rgba(147,51,234,0.6)] hover:cursor-pointer">
+              See our plans
+            </button>
+          </Link>
 
           {/* Blue Glow Hover */}
-          <button className="rounded-full bg-linear-to-r from-pink-500 to-red-500 px-8 py-3 text-white transition-all duration-300 hover:from-pink-400 hover:to-red-400 hover:shadow-[0_0_20px_rgba(37,99,235,0.6)] hover:cursor-pointer">
-            Get started
-          </button>
+          <Link href="register">
+            <button className="rounded-full bg-linear-to-r from-pink-500 to-red-500 px-8 py-3 text-white transition-colors duration-500 hover:from-pink-400 hover:to-red-400 hover:shadow-[0_0_20px_rgba(37,99,235,0.6)] hover:cursor-pointer">
+              Get started
+            </button>
+          </Link>
         </div>
 
       </main>
