@@ -122,7 +122,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-pink-500/30 selection:text-pink-200">
       <DashNavbarComponent />
 
-      <div className="relative mx-auto max-w-[1600px] px-6 pt-24 pb-12 sm:px-10 sm:pt-28 lg:pb-16">
+      <div className="relative mx-auto max-w-[1600px] px-6 pt-40 pb-12 sm:px-10 sm:pt-44 lg:pb-16">
         <div className="absolute top-0 left-1/4 -z-10 h-72 w-72 rounded-full bg-pink-600/10 blur-[120px] pointer-events-none" />
         <div className="absolute top-1/3 right-1/4 -z-10 h-96 w-96 rounded-full bg-purple-600/10 blur-[150px] pointer-events-none" />
 

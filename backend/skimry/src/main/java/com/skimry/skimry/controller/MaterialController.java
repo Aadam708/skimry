@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.server.ResponseStatusException;
+import com.skimry.skimry.dto.MaterialDeletionRequest;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 
 @RequestMapping("api/materials")
@@ -88,6 +90,39 @@ public class MaterialController {
         }
     }
 
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteMaterials(
+            @RequestBody MaterialDeletionRequest request) {
 
+        try {
+            int deletedCount = materialService.deleteMaterials(
+                    request.type(),
+                    request.amount()
+            );
 
+            return ResponseEntity.ok(Map.of(
+                    "deletedCount", deletedCount
+            ));
+
+        } catch (ResponseStatusException exception) {
+            return ResponseEntity
+                    .status(exception.getStatusCode())
+                    .body(Map.of(
+                            "error",
+                            exception.getReason() == null
+                                    ? "Deletion request failed"
+                                    : exception.getReason()
+                    ));
+
+        } catch (UsernameNotFoundException exception) {
+            return ResponseEntity
+                    .status(401)
+                    .body(Map.of("error", "User not authenticated"));
+
+        } catch (Exception exception) {
+            return ResponseEntity
+                    .status(500)
+                    .body(Map.of("error", "Unable to delete materials"));
+        }
+    }
 }

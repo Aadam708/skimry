@@ -54,6 +54,14 @@ public class ClerkClient {
         }
     }
 
+    public void deleteUser(String clerkUserId) {
+        restClient.delete()
+                .uri("/users/{id}", clerkUserId)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + clerkSecretKey)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
     public record ClerkProfile(
             String clerkUserId,
             String email,

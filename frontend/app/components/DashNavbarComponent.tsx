@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 
 // Adjust the path to your logo if needed based on the components folder
 import logo from '../../public/images/logo.png';
+import ProfileMenu from "./ProfileMenu";
 
 type DashNavbarProps = {
   showReturnHome?: boolean;
@@ -21,12 +22,12 @@ const DashNavbarComponent = ({ showReturnHome = false }: DashNavbarProps) => {
   }
   return (
     <header className="flex w-full items-center justify-between p-6 px-8 absolute top-0 left-0 right-0 z-50">
-      {/* Top Left: Logo */}
-      <div className="flex items-center">
+      {/* Top Left: Logo and side navigation */}
+      <div className="flex flex-col items-start gap-3">
         {showReturnHome ? (
           <Link
             href="/dashboard"
-            className="absolute left-6 top-6 flex items-center gap-2 text-sm  text-white transition-colors hover:text-pink-500 duration-500"
+            className="flex items-center gap-2 text-sm text-white transition-colors duration-500 hover:text-pink-500"
           >
             <span aria-hidden="true" className="text-lg">
               ←
@@ -34,16 +35,19 @@ const DashNavbarComponent = ({ showReturnHome = false }: DashNavbarProps) => {
             <span>Return home</span>
           </Link>
         ) : (
-          <Link href="/dashboard">
-            <Image
-              src={logo}
-              alt="Skimry Logo"
-              width={120} // Smaller size for the navbar
-              height={40}  // Approximate height to avoid layout shift (adjust as needed)
-              className="object-contain w-auto h-auto"
-              priority
-            />
-          </Link>
+          <>
+            <Link href="/dashboard">
+              <Image
+                src={logo}
+                alt="Skimry Logo"
+                width={120}
+                height={40}
+                className="h-auto w-auto object-contain"
+                priority
+              />
+            </Link>
+
+          </>
         )}
       </div>
 
@@ -55,10 +59,10 @@ const DashNavbarComponent = ({ showReturnHome = false }: DashNavbarProps) => {
         <Link href="/pricing" className={setDesign("/pricing")}>
           Plans
         </Link>
-        <Link href="/logout" className={setDesign("/logout")}>
-          Logout
-        </Link>
+        <ProfileMenu/>
       </nav>
+
+
     </header>
   );
 };

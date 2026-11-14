@@ -9,6 +9,8 @@ import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import com.stripe.model.Subscription;
+import com.stripe.param.SubscriptionUpdateParams;
 
 @Service
 public class StripeService {
@@ -73,5 +75,20 @@ public class StripeService {
             com.stripe.model.billingportal.Session.create(params);
 
         return portalSession.getUrl();
+    }
+
+    public void cancelSubscriptionAtPeriodEnd(
+            String stripeSubscriptionId
+    ) throws StripeException {
+
+        Subscription subscription =
+                Subscription.retrieve(stripeSubscriptionId);
+
+        SubscriptionUpdateParams params =
+                SubscriptionUpdateParams.builder()
+                        .setCancelAtPeriodEnd(true)
+                        .build();
+
+        subscription.update(params);
     }
 }

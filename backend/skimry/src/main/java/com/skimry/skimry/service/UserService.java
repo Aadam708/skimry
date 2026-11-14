@@ -18,6 +18,12 @@ import com.skimry.skimry.entity.User;
 import com.skimry.skimry.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
+import com.skimry.skimry.entity.Material;
+import com.skimry.skimry.repository.MaterialRepository;
+import com.stripe.exception.StripeException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.skimry.skimry.security.AuthenticatedUser;
 
 @Service
 public class UserService {
@@ -25,16 +31,22 @@ public class UserService {
     private final UserRepository userRepository;
     private final ClerkClient clerkClient;
     private final JwtDecoder clerkJwtDecoder;
+    private final MaterialRepository materialRepository;
+    private final StripeService stripeService;
 
     public UserService(
             UserRepository userRepository,
             EmailService emailService,
             ClerkClient clerkClient,
-            JwtDecoder clerkJwtDecoder) {
+            JwtDecoder clerkJwtDecoder,
+            MaterialRepository materialRepository,
+            StripeService stripeService) {
 
         this.userRepository = userRepository;
         this.clerkClient = clerkClient;
         this.clerkJwtDecoder = clerkJwtDecoder;
+        this.materialRepository = materialRepository;
+        this.stripeService = stripeService;
     }
 
 
@@ -143,5 +155,67 @@ public class UserService {
         user.setClerkUserId(clerkUserId);
 
         return userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteAuthenticatedUser() {
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        if (authentication == null
+                || !(authentication.getPrincipal()
+                instanceof AuthenticatedUser authenticatedUser)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "User is not authenticated"
+            );
+        }
+
+        User user = userRepository.findById(authenticatedUser.getUserId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "User does not exist"
+                ));
+
+        String clerkUserId = user.getClerkUserId();
+        String stripeSubscriptionId = user.getStripeSubscriptionId();
+
+        try {
+            if (stripeSubscriptionId != null
+                    && !stripeSubscriptionId.isBlank()) {
+
+                stripeService.cancelSubscriptionAtPeriodEnd(
+                        stripeSubscriptionId
+                );
+            }
+
+            if (clerkUserId != null
+                    && !clerkUserId.isBlank()) {
+
+                clerkClient.deleteUser(clerkUserId);
+            }
+
+            //TODO:remove as it can be done with cascade already set for each user
+            materialRepository.deleteAll(
+                    materialRepository.findByUser(user)
+            );
+
+            userRepository.delete(user);
+
+        } catch (StripeException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "Unable to cancel the Stripe subscription",
+                    exception
+            );
+        } catch (Exception exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "Unable to complete account deletion",
+                    exception
+            );
+        }
     }
 }
