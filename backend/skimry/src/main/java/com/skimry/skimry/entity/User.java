@@ -47,7 +47,7 @@ public class User {
     @Column(name = "clerk_user_id", unique = true)
     private String clerkUserId;
 
-    // === ADD THIS RELATIONSHIP ===
+    // allows all materials associated with user to be deleted when a user is deleted
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Material> materials = new ArrayList<>();
 }

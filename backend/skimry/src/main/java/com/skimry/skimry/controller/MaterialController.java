@@ -12,6 +12,7 @@ import com.skimry.skimry.service.MaterialService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.server.ResponseStatusException;
 import com.skimry.skimry.dto.MaterialDeletionRequest;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -123,6 +125,45 @@ public class MaterialController {
             return ResponseEntity
                     .status(500)
                     .body(Map.of("error", "Unable to delete materials"));
+        }
+    }
+
+    @DeleteMapping("/{materialId}")
+    public ResponseEntity<?> deleteMaterial(
+            @PathVariable UUID materialId) {
+
+        try {
+            materialService.deleteMaterial(materialId);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Material deleted successfully"
+            ));
+
+        } catch (ResponseStatusException exception) {
+            return ResponseEntity
+                    .status(exception.getStatusCode())
+                    .body(Map.of(
+                            "error",
+                            exception.getReason() == null
+                                    ? "Material deletion failed"
+                                    : exception.getReason()
+                    ));
+
+        } catch (UsernameNotFoundException exception) {
+            return ResponseEntity
+                    .status(401)
+                    .body(Map.of(
+                            "error",
+                            "User not authenticated"
+                    ));
+
+        } catch (Exception exception) {
+            return ResponseEntity
+                    .status(500)
+                    .body(Map.of(
+                            "error",
+                            "Unable to delete material"
+                    ));
         }
     }
 }

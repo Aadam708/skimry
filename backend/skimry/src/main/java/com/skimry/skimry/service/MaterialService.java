@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.skimry.skimry.dto.MaterialDto;
 import com.skimry.skimry.dto.MaterialRequest;
@@ -226,6 +227,30 @@ public class MaterialService {
                         new UsernameNotFoundException(
                                 "User does not exist"
                         ));
+    }
+
+    @Transactional
+    public void deleteMaterial(UUID materialId) {
+        User currentUser = getAuthenticatedUser();
+
+        enforceMaterialDeletionRateLimit(
+                currentUser.getUserId().toString()
+        );
+
+        Material material = materialRepository.findById(materialId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Material not found"
+                ));
+
+        if (!material.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You cannot delete this material"
+            );
+        }
+
+        materialRepository.delete(material);
     }
 
 }

@@ -18,7 +18,6 @@ import com.skimry.skimry.entity.User;
 import com.skimry.skimry.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
-import com.skimry.skimry.entity.Material;
 import com.skimry.skimry.repository.MaterialRepository;
 import com.stripe.exception.StripeException;
 import org.springframework.security.core.Authentication;
@@ -31,7 +30,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final ClerkClient clerkClient;
     private final JwtDecoder clerkJwtDecoder;
-    private final MaterialRepository materialRepository;
     private final StripeService stripeService;
 
     public UserService(
@@ -45,7 +43,6 @@ public class UserService {
         this.userRepository = userRepository;
         this.clerkClient = clerkClient;
         this.clerkJwtDecoder = clerkJwtDecoder;
-        this.materialRepository = materialRepository;
         this.stripeService = stripeService;
     }
 
@@ -196,11 +193,6 @@ public class UserService {
 
                 clerkClient.deleteUser(clerkUserId);
             }
-
-            //TODO:remove as it can be done with cascade already set for each user
-            materialRepository.deleteAll(
-                    materialRepository.findByUser(user)
-            );
 
             userRepository.delete(user);
 
