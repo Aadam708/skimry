@@ -16,6 +16,11 @@ import com.skimry.skimry.dto.StripeUserDto;
 import com.skimry.skimry.dto.UserDto;
 import com.skimry.skimry.entity.User;
 import com.skimry.skimry.repository.UserRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import com.skimry.skimry.entity.DeletedAccountGuard;
+import com.skimry.skimry.repository.DeletedAccountGuardRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import com.skimry.skimry.repository.MaterialRepository;
@@ -31,19 +36,26 @@ public class UserService {
     private final ClerkClient clerkClient;
     private final JwtDecoder clerkJwtDecoder;
     private final StripeService stripeService;
+    private final DeletedAccountGuardRepository deletedAccountGuardRepository;
+    private final EmailHashService emailHashService;
 
     public UserService(
             UserRepository userRepository,
-            EmailService emailService,
+            EmailHashService emailHashService,
             ClerkClient clerkClient,
             JwtDecoder clerkJwtDecoder,
             MaterialRepository materialRepository,
-            StripeService stripeService) {
+            StripeService stripeService,
+            DeletedAccountGuardRepository deletedAccountGuardRepository
+        ) {
 
         this.userRepository = userRepository;
         this.clerkClient = clerkClient;
         this.clerkJwtDecoder = clerkJwtDecoder;
         this.stripeService = stripeService;
+        this.deletedAccountGuardRepository =
+                deletedAccountGuardRepository;
+        this.emailHashService = emailHashService;
     }
 
 
@@ -136,17 +148,44 @@ public class UserService {
 
         String email = clerkProfile.email().trim().toLowerCase();
 
-        User user = userRepository.findByClerkUserId(clerkUserId)
-                .orElseGet(() -> userRepository.findByEmail(email)
-                        .orElse(null));
+        String normalizedEmail =
+                emailHashService.normalizeEmail(clerkProfile.email());
+
+        String emailHash =
+                emailHashService.hashEmail(normalizedEmail);
+
+        User user =
+                userRepository.findByClerkUserId(clerkUserId)
+                        .orElseGet(() ->
+                                userRepository.findByEmail(normalizedEmail)
+                                        .orElse(null)
+                        );
 
         if (user == null) {
             user = new User();
-            user.setEmail(email);
+            user.setEmail(normalizedEmail);
+            user.setTier("free");
 
+            DeletedAccountGuard guard =
+                    deletedAccountGuardRepository
+                            .findByEmailHash(emailHash)
+                            .orElse(null);
 
+            if (guard != null) {
+                user.setPostsSummarisedThisMonth(
+                        guard.getPriorSkimsUsed() == null
+                                ? 0
+                                : guard.getPriorSkimsUsed()
+                );
+
+                if (guard.getLastResetDate() != null) {
+                    user.setLastResetDate(guard.getLastResetDate());
+                } else {
+                    user.setLastResetDate(LocalDate.now());
+                }
+            }
         } else {
-            user.setEmail(email);
+            user.setEmail(normalizedEmail);
         }
 
         user.setClerkUserId(clerkUserId);
@@ -175,6 +214,7 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException(
                         "User does not exist"
                 ));
+        upsertDeletedAccountGuard(user);
 
         String clerkUserId = user.getClerkUserId();
         String stripeSubscriptionId = user.getStripeSubscriptionId();
@@ -209,5 +249,46 @@ public class UserService {
                     exception
             );
         }
+    }
+
+    private void upsertDeletedAccountGuard(User user) {
+        String emailHash =
+                emailHashService.hashEmail(user.getEmail());
+
+        LocalDateTime now = LocalDateTime.now();
+
+        DeletedAccountGuard guard =
+                deletedAccountGuardRepository
+                        .findByEmailHash(emailHash)
+                        .orElse(null);
+
+        int currentUsage =
+                user.getPostsSummarisedThisMonth() == null
+                        ? 0
+                        : user.getPostsSummarisedThisMonth();
+
+        if (guard == null) {
+            guard = DeletedAccountGuard.builder()
+                    .emailHash(emailHash)
+                    .priorSkimsUsed(currentUsage)
+                    .lastResetDate(
+                            user.getLastResetDate()
+                    )
+                    .deletedAt(now)
+                    .build();
+        } else {
+            int previousUsage =
+                    guard.getPriorSkimsUsed() == null
+                            ? 0
+                            : guard.getPriorSkimsUsed();
+
+            guard.setPriorSkimsUsed(
+                    Math.max(previousUsage, currentUsage)
+            );
+            guard.setLastResetDate(user.getLastResetDate());
+            guard.setDeletedAt(now);
+        }
+
+        deletedAccountGuardRepository.saveAndFlush(guard);
     }
 }

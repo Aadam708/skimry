@@ -139,7 +139,7 @@ public class MaterialService {
             );
         }
     }
-
+    @Transactional 
     public int deleteMaterials(String type, Integer amount) {
         User currentUser = getAuthenticatedUser();
 
