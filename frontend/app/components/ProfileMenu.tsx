@@ -75,7 +75,9 @@ export default function ProfileMenu() {
   const deleteAccount = async () => {
     if (
       !window.confirm(
-        "Permanently delete your account? This action cannot be undone.",
+        `Permanently delete your account?
+         Any subscriptions will be cancelled and all your skims will be lost.
+         This action cannot be undone.`,
       )
     ) {
       return;

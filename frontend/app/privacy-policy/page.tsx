@@ -42,6 +42,10 @@ const sections = [
             Process subscription payments and manage access to paid features.
           </li>
           <li>
+            Prevent abuse, enforce free-tier usage limits, and protect platform
+            integrity.
+          </li>
+          <li>
             Respond to customer support requests sent to support@skimry.com.
           </li>
         </ul>
@@ -67,7 +71,9 @@ const sections = [
             payment processing.
           </li>
           <li>
-            <strong className="text-zinc-200">Railway and Aiven:</strong>{" "}
+            <strong className="text-zinc-200">
+              Google Cloud and Aiven:
+            </strong>{" "}
             Hosting, application servers, and database infrastructure.
           </li>
         </ul>
@@ -85,13 +91,29 @@ const sections = [
     ),
   },
   {
-    title: "5. Your Rights",
+    title: "5. Data Retention and Your Rights",
     content: (
-      <p>
-        Depending on your location, you may have the right to access, update,
-        or request deletion of your personal data. You can exercise these
-        rights by contacting us.
-      </p>
+      <>
+        <p>
+          You can delete your account directly within the app at any time.
+          Deleting your account permanently removes your profile, saved reading
+          materials, and summaries from our active databases.
+        </p>
+
+        <p className="mt-4">
+          Following account deletion, we retain only a non-reversible
+          cryptographic hash of your email address alongside your prior
+          free-tier usage count and reset date for the legitimate purpose of
+          preventing free-tier abuse. Billing records may also be retained by
+          Stripe as required for tax and legal compliance.
+        </p>
+
+        <p className="mt-4">
+          If you have questions about your data or would like to request access
+          to or correction of your personal information, you can contact us at{" "}
+          <strong className="text-zinc-200">support@skimry.com</strong>.
+        </p>
+      </>
     ),
   },
 ];
