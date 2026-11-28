@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.skimry.skimry.dto.MaterialDto;
 import com.skimry.skimry.dto.MaterialRequest;
@@ -40,6 +41,8 @@ public class MaterialService {
     }
 
     private final Map<String, Bucket> userSummaryBuckets =
+        new ConcurrentHashMap<>();
+    private final Map<String, Bucket> materialDeletionBuckets =
         new ConcurrentHashMap<>();
 
     public MaterialDto saveMaterial(MaterialRequest materialRequest) {
@@ -136,6 +139,71 @@ public class MaterialService {
             );
         }
     }
+    @Transactional 
+    public int deleteMaterials(String type, Integer amount) {
+        User currentUser = getAuthenticatedUser();
+
+        enforceMaterialDeletionRateLimit(
+                currentUser.getUserId().toString()
+        );
+
+        List<Material> userMaterials =
+                materialRepository.findByUserOrderByCreatedAtAsc(currentUser);
+
+        if ("all".equalsIgnoreCase(type)) {
+            int deletedCount = userMaterials.size();
+            materialRepository.deleteAllInBatch(userMaterials);
+            return deletedCount;
+        }
+
+        if (!"oldest".equalsIgnoreCase(type)
+                || amount == null
+                || !List.of(10, 50, 100).contains(amount)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Deletion amount must be 10, 50, 100, or all."
+            );
+        }
+
+        int numberToDelete = Math.min(amount, userMaterials.size());
+
+        if (numberToDelete == 0) {
+            return 0;
+        }
+
+        List<Material> oldestMaterials =
+                userMaterials.subList(0, numberToDelete);
+
+        materialRepository.deleteAllInBatch(oldestMaterials);
+
+        return numberToDelete;
+    }
+
+    private Bucket createMaterialDeletionBucket() {
+        Bandwidth limit = Bandwidth.builder()
+                .capacity(5)
+                .refillGreedy(5, Duration.ofMinutes(1))
+                .build();
+
+        return Bucket.builder()
+                .addLimit(limit)
+                .build();
+    }
+
+    private void enforceMaterialDeletionRateLimit(String userKey) {
+        Bucket bucket = materialDeletionBuckets.computeIfAbsent(
+                userKey,
+                key -> createMaterialDeletionBucket()
+        );
+
+        if (!bucket.tryConsume(1)) {
+            throw new ResponseStatusException(
+                    HttpStatus.TOO_MANY_REQUESTS,
+                    "Too many deletion requests. Please try again later."
+            );
+        }
+    }
 
     private User getAuthenticatedUser() {
         Authentication authentication =
@@ -159,6 +227,30 @@ public class MaterialService {
                         new UsernameNotFoundException(
                                 "User does not exist"
                         ));
+    }
+
+    @Transactional
+    public void deleteMaterial(UUID materialId) {
+        User currentUser = getAuthenticatedUser();
+
+        enforceMaterialDeletionRateLimit(
+                currentUser.getUserId().toString()
+        );
+
+        Material material = materialRepository.findById(materialId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Material not found"
+                ));
+
+        if (!material.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You cannot delete this material"
+            );
+        }
+
+        materialRepository.delete(material);
     }
 
 }

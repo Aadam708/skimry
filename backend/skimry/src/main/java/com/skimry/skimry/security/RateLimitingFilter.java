@@ -28,6 +28,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final Map<String, Bucket> summaryBuckets =
             new ConcurrentHashMap<>();
 
+    private final Map<String, Bucket> deletionBuckets =
+            new ConcurrentHashMap<>();
+
     private final RequestMatcher authMatcher =
             PathPatternRequestMatcher.withDefaults()
                     .matcher(HttpMethod.POST, "/api/auth/**");
@@ -39,6 +42,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final RequestMatcher materialsMatcher =
             PathPatternRequestMatcher.withDefaults()
                     .matcher(HttpMethod.GET, "/api/materials/my");
+
+    private final RequestMatcher deletionMatcher =
+            PathPatternRequestMatcher.withDefaults()
+                    .matcher(HttpMethod.DELETE, "/api/**");
 
     private Bucket createAuthBucket() {
         Bandwidth limit = Bandwidth.builder()
@@ -55,6 +62,17 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         Bandwidth limit = Bandwidth.builder()
                 .capacity(10)
                 .refillGreedy(10, Duration.ofMinutes(1))
+                .build();
+
+        return Bucket.builder()
+                .addLimit(limit)
+                .build();
+    }
+
+    private Bucket createDeletionBucket() {
+        Bandwidth limit = Bandwidth.builder()
+                .capacity(5)
+                .refillGreedy(5, Duration.ofMinutes(1))
                 .build();
 
         return Bucket.builder()
@@ -102,6 +120,18 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             }
         }
 
+        if (deletionMatcher.matches(request)) {
+            Bucket bucket = deletionBuckets.computeIfAbsent(
+                    clientIp,
+                    key -> createDeletionBucket()
+            );
+
+            if (!bucket.tryConsume(1)) {
+                sendDeletionRateLimitResponse(response);
+                return;
+            }
+        }
+
         filterChain.doFilter(request, response);
     }
 
@@ -115,6 +145,20 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         response.getWriter().write(
                 "{\"error\":\"Too many summary requests. Please try again later.\"}"
+        );
+    }
+
+    private void sendDeletionRateLimitResponse(
+            HttpServletResponse response
+    ) throws IOException {
+
+        response.setStatus(429);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("Retry-After", "60");
+
+        response.getWriter().write(
+                "{\"error\":\"Too many deletion requests. Please try again later.\"}"
         );
     }
 

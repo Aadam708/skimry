@@ -22,6 +22,11 @@ export default function DashboardPage() {
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(
     null,
   );
+  const [isDeletingMaterial, setIsDeletingMaterial] = useState(false);
+  const [materialActionError, setMaterialActionError] = useState<string | null>(
+    null,
+  );
+  const [isMaterialMenuOpen, setIsMaterialMenuOpen] = useState(false);
   const { isLoaded: clerkLoaded, isSignedIn, getToken } = useAuth();
   const router = useRouter();
   const extensionUrl = process.env.NEXT_PUBLIC_EXTENSION_URL;
@@ -118,11 +123,64 @@ export default function DashboardPage() {
     });
   };
 
+  const deleteSelectedMaterial = async () => {
+    if (!selectedMaterial) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this material? This action cannot be undone.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setIsDeletingMaterial(true);
+      setMaterialActionError(null);
+
+      const response = await fetchApi(
+        `/api/materials/${selectedMaterial.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      const responseBody = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          responseBody?.error || "Unable to delete this material.",
+        );
+      }
+
+      setMaterials((currentMaterials) =>
+        currentMaterials.filter(
+          (material) => material.id !== selectedMaterial.id,
+        ),
+      );
+
+      setSelectedMaterial(null);
+      setIsMaterialMenuOpen(false);
+    } catch (error) {
+      console.error("Material deletion failed:", error);
+
+      setMaterialActionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete this material. Please try again.",
+      );
+    } finally {
+      setIsDeletingMaterial(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-pink-500/30 selection:text-pink-200">
       <DashNavbarComponent />
 
-      <div className="relative mx-auto max-w-[1600px] px-6 pt-24 pb-12 sm:px-10 sm:pt-28 lg:pb-16">
+      <div className="relative mx-auto max-w-[1600px] px-6 pt-40 pb-12 sm:px-10 sm:pt-44 lg:pb-16">
         <div className="absolute top-0 left-1/4 -z-10 h-72 w-72 rounded-full bg-pink-600/10 blur-[120px] pointer-events-none" />
         <div className="absolute top-1/3 right-1/4 -z-10 h-96 w-96 rounded-full bg-purple-600/10 blur-[150px] pointer-events-none" />
 
@@ -205,7 +263,11 @@ export default function DashboardPage() {
             {materials.map((item) => (
               <div
                 key={item.id}
-                onClick={() => setSelectedMaterial(item)}
+                onClick={() => {
+                  setSelectedMaterial(item);
+                  setIsMaterialMenuOpen(false);
+                  setMaterialActionError(null);
+                }}
                 className="relative flex flex-col justify-between rounded-2xl border border-zinc-800 bg-zinc-900/20 p-6
                 transition-all duration-500 hover:border-pink-500/40 hover:cursor-pointer
                  hover:bg-zinc-900/60 hover:shadow-xl hover:shadow-pink-500/5 group"
@@ -270,7 +332,7 @@ export default function DashboardPage() {
             {/* Close Button */}
             <button
               onClick={() => setSelectedMaterial(null)}
-              className="absolute top-4 right-4 z-10 text-zinc-400 hover:text-white transition-colors"
+              className="absolute right-4 top-4 z-10 cursor-pointer text-zinc-400 transition-colors duration-500 hover:text-red-400"
             >
               <svg
                 className="w-6 h-6"
@@ -323,21 +385,68 @@ export default function DashboardPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="border-t border-zinc-800 p-6 flex gap-3">
-              <a
-                href={selectedMaterial.originalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white font-semibold rounded-lg transition-colors text-center"
-              >
-                View Original Source
-              </a>
-              <button
-                onClick={() => setSelectedMaterial(null)}
-                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-semibold rounded-lg transition-colors"
-              >
-                Close
-              </button>
+            <div className="border-t border-zinc-800 p-6">
+              {materialActionError && (
+                <p
+                  role="alert"
+                  className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300"
+                >
+                  {materialActionError}
+                </p>
+              )}
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedMaterial(null);
+                    setIsMaterialMenuOpen(false);
+                    setMaterialActionError(null);
+                  }}
+                  className="flex-1 cursor-pointer rounded-lg bg-zinc-800 px-4 py-2 font-semibold text-zinc-100 transition-colors duration-500 hover:bg-zinc-700"
+                >
+                  Close
+                </button>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={isMaterialMenuOpen}
+                    onClick={() => setIsMaterialMenuOpen((isOpen) => !isOpen)}
+                    className="w-28 cursor-pointer rounded-lg bg-pink-600 px-4 py-2 font-semibold text-white transition-colors duration-500 hover:bg-pink-700"
+                  >
+                    More
+                  </button>
+
+                  {isMaterialMenuOpen && (
+                    <div
+                      role="menu"
+                      className="absolute bottom-12 right-0 z-30 w-44 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 p-1 shadow-xl"
+                    >
+                      <a
+                        href={selectedMaterial.originalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setIsMaterialMenuOpen(false)}
+                        className="block cursor-pointer rounded-lg px-3 py-2 text-sm text-zinc-300 transition-colors duration-500 hover:bg-zinc-800 hover:text-white"
+                      >
+                        View source
+                      </a>
+
+                      <button
+                        type="button"
+                        role="menuitem"
+                        disabled={isDeletingMaterial}
+                        onClick={deleteSelectedMaterial}
+                        className="block w-full cursor-pointer rounded-lg px-3 py-2 text-left text-sm text-red-400 transition-colors duration-500 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isDeletingMaterial ? "Deleting..." : "Delete material"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
