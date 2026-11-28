@@ -42,7 +42,11 @@ const sections = [
     "content": "We may suspend or terminate your account and access to the Service without prior notice if you breach these Terms or engage in fraudulent activity."
   },
   {
-    "title": "11. Changes to Terms",
+    "title": "11. Assignment and Business Transfers",
+    "content": "Skimry is currently operated independently, and we may transfer or assign our rights and obligations under these Terms to a successor entity (including a future corporate entity) in connection with a business restructuring, incorporation, or sale of assets."
+  },
+  {
+    "title": "12. Changes to Terms",
     "content": "We may update these Terms from time to time. Continued use of the Service after changes take effect means you accept the revised Terms."
   }
 ]

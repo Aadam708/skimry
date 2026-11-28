@@ -146,8 +146,6 @@ public class UserService {
         ClerkClient.ClerkProfile clerkProfile =
                 clerkClient.getUser(clerkUserId);
 
-        String email = clerkProfile.email().trim().toLowerCase();
-
         String normalizedEmail =
                 emailHashService.normalizeEmail(clerkProfile.email());
 
